@@ -1,0 +1,1814 @@
+<document>
+  <sysdate>2025-09-07 16:16:53</sysdate>
+  <account>RO72BRMA080102480255RO01</account>
+  <opening_balance>
+    <balance>82779.97</balance>
+    <date>2025-07-14</date>
+  </opening_balance>
+  <movements>
+<movement>
+      <ref>IZCARTRN.34128341.60506145</ref>
+      <value_date>2025-07-14</value_date>
+      <booking_date>2025-07-14</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / PETIT VRAC GAZ      COMUNA CARBUN ID :XM000001415313 11-07-2025</details>
+      <debit>159.18</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34129672.60507487</ref>
+      <value_date>2025-07-14</value_date>
+      <booking_date>2025-07-14</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / PROFI 3849 C9       BRASOV ID :XM000001415504 12-07-2025</details>
+      <debit>10.98</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34135319.60522365</ref>
+      <value_date>2025-07-14</value_date>
+      <booking_date>2025-07-14</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / SC STOP UNU BV C3   BRASOV ID :XM000001417473 13-07-2025</details>
+      <debit>155.07</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5020591.60523656</ref>
+      <value_date>2025-07-14</value_date>
+      <booking_date>2025-07-14</booking_date>
+      <details>Incasare OP/ 4084742/NETOPIA FINANCIAL SERVICES SA/43131360 / RO73BFER121100048617RO01/  /ROC/BatchId 51567592//RFB/911</details>
+      <debit>0.00</debit>
+      <credit>191.96</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5021331.60524573</ref>
+      <value_date>2025-07-14</value_date>
+      <booking_date>2025-07-14</booking_date>
+      <details>Incasare OP/ MC000041393542/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1983.89</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5021701.60524944</ref>
+      <value_date>2025-07-14</value_date>
+      <booking_date>2025-07-14</booking_date>
+      <details>Incasare OP/ 879/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>1155.54</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34136053.60527426</ref>
+      <value_date>2025-07-14</value_date>
+      <booking_date>2025-07-14</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *XE5WWVCVW2  DUBLIN ID :XM000001418170 14-07-2025, 1 EUR = 5.0777 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34166080.60565225</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>5157*******31710 ATM Retragere Numerar / ATM 044 BRASOV ASTRABRASOV ID :XM000001419351 14-07-2025</details>
+      <debit>2000.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34166080.60565225</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>Com. 5157*******31710 ATM Retragere Numerar / ATM 044 BRASOV ASTRABRASOV ID :XM000001419351 14-07-2025</details>
+      <debit>6.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34166081.60565226</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>5157*******31710 ATM Retragere Numerar / ATM 044 BRASOV ASTRABRASOV ID :XM000001419352 14-07-2025</details>
+      <debit>2000.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34166081.60565226</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>Com. 5157*******31710 ATM Retragere Numerar / ATM 044 BRASOV ASTRABRASOV ID :XM000001419352 14-07-2025</details>
+      <debit>6.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5030710.60580757</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>Incasare OP/ MC000041433254/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1001.22</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5031612.60588183</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>Incasare OP/ adf310/CONFRASILVAS SRL/22819309 / RO20RZBR0000060014122069/  /ROC/proforma nr.231487</details>
+      <debit>0.00</debit>
+      <credit>169.99</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5031645.60588216</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>Incasare OP/ 123/AA PRO DIAGNOSTIC SRL/23068692 / RO47RZBR0000060010102582/  /ROC/NRTTPF 231496</details>
+      <debit>0.00</debit>
+      <credit>274.21</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5032522.60589095</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>Incasare OP/ 713/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>139.99</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5080801.60592610</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>Ref: 60592610 - Plata in lei/Nr. OP:302 / Data decontarii: 16-07-2025 / in fav. HANNESON EXP CONT: Factura 1195</details>
+      <debit>400.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5080801.60592610</ref>
+      <value_date>2025-07-15</value_date>
+      <booking_date>2025-07-15</booking_date>
+      <details>Ref: 60592610 - Comision plata lei / Nr. OP: 302 / HANNESON EXP CONT</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5082012.60625800</ref>
+      <value_date>2025-07-16</value_date>
+      <booking_date>2025-07-16</booking_date>
+      <details>Ref: 60625800 - Plata in lei/Nr. OP:303 / Data decontarii: 16-07-2025 / in fav. LAZAR I CORNELIA PFA: F:25012</details>
+      <debit>350.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5082012.60625800</ref>
+      <value_date>2025-07-16</value_date>
+      <booking_date>2025-07-16</booking_date>
+      <details>Ref: 60625800 - Comision plata lei / Nr. OP: 303 / LAZAR I CORNELIA PFA</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34202367.60628899</ref>
+      <value_date>2025-07-16</value_date>
+      <booking_date>2025-07-16</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *89KAEVQVW2  DUBLIN ID :XM000001421317 16-07-2025, 1 EUR = 5.0787 RON</details>
+      <debit>181.26</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5082606.60631406</ref>
+      <value_date>2025-07-16</value_date>
+      <booking_date>2025-07-16</booking_date>
+      <details>Ref: 60631406 - Plata in lei/Nr. OP:304 / Data decontarii: 16-07-2025 / in fav. RODICA GEORGESCU: F:233210 RETUR PRODUSE</details>
+      <debit>69.98</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5082606.60631406</ref>
+      <value_date>2025-07-16</value_date>
+      <booking_date>2025-07-16</booking_date>
+      <details>Ref: 60631406 - Comision plata lei / Nr. OP: 304 / RODICA GEORGESCU</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5037913.60638346</ref>
+      <value_date>2025-07-16</value_date>
+      <booking_date>2025-07-16</booking_date>
+      <details>Incasare OP/ MC000041460654/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1417.76</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5040001.60644971</ref>
+      <value_date>2025-07-16</value_date>
+      <booking_date>2025-07-16</booking_date>
+      <details>Incasare OP/ 24/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT092</details>
+      <debit>0.00</debit>
+      <credit>6516.43</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5040041.60645011</ref>
+      <value_date>2025-07-16</value_date>
+      <booking_date>2025-07-16</booking_date>
+      <details>Incasare OP/ 20/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT093</details>
+      <debit>0.00</debit>
+      <credit>112.70</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5088402.60675040</ref>
+      <value_date>2025-07-17</value_date>
+      <booking_date>2025-07-17</booking_date>
+      <details>Plata OP-305/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>8112.36</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5089560.60682918</ref>
+      <value_date>2025-07-17</value_date>
+      <booking_date>2025-07-17</booking_date>
+      <details>Ref: 60682918 - Plata in lei/Nr. OP:306 / Data decontarii: 17-07-2025 / in fav. DELIVERY SOLUTIONS S.A.: 260500079933</details>
+      <debit>1398.94</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5089560.60682918</ref>
+      <value_date>2025-07-17</value_date>
+      <booking_date>2025-07-17</booking_date>
+      <details>Ref: 60682918 - Comision plata lei / Nr. OP: 306 / DELIVERY SOLUTIONS S.A.</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5044377.60685955</ref>
+      <value_date>2025-07-17</value_date>
+      <booking_date>2025-07-17</booking_date>
+      <details>Incasare OP/ MC000041484410/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>302.43</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5046412.60691479</ref>
+      <value_date>2025-07-17</value_date>
+      <booking_date>2025-07-17</booking_date>
+      <details>Incasare OP/ 858/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>513.75</credit>
+    </movement>
+<movement>
+      <ref>OLIT.GTX.5093718.60718279</ref>
+      <value_date>2025-07-18</value_date>
+      <booking_date>2025-07-18</booking_date>
+      <details>Ref: 60718279 - Plata in lei/Nr. OP:307 / Data decontarii: 18-07-2025 / in fav. TREZORERIA OPERATIVA A MUN BRASOV: TVA LUNAR 06.2025</details>
+      <debit>2153.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIT.GTX.5093718.60718279</ref>
+      <value_date>2025-07-18</value_date>
+      <booking_date>2025-07-18</booking_date>
+      <details>Ref: 60718279 - Comision plata lei / Nr. OP: 307 / TREZORERIA OPERATIVA A MUN BRASOV</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5049720.60721359</ref>
+      <value_date>2025-07-18</value_date>
+      <booking_date>2025-07-18</booking_date>
+      <details>Incasare OP/ 890536424/142053/DANTE INTERNATIONAL SA/14399840 / RO73INGB0001008199078940/  /ROC/Notificare plata 17.07.2025 RMK17 . .//RFB/</details>
+      <debit>0.00</debit>
+      <credit>4711.81</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5052688.60735616</ref>
+      <value_date>2025-07-18</value_date>
+      <booking_date>2025-07-18</booking_date>
+      <details>Incasare OP/ 868/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>430.77</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5052748.60735676</ref>
+      <value_date>2025-07-18</value_date>
+      <booking_date>2025-07-18</booking_date>
+      <details>Incasare OP/ MC000041524982/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1387.77</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5098371.60737884</ref>
+      <value_date>2025-07-18</value_date>
+      <booking_date>2025-07-18</booking_date>
+      <details>Ref: 60737884 - Plata in lei/Nr. OP:308 / Data decontarii: 21-07-2025 / in fav. FOTOAMA SRL: Factura FAE089</details>
+      <debit>1612.90</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5098371.60737884</ref>
+      <value_date>2025-07-18</value_date>
+      <booking_date>2025-07-18</booking_date>
+      <details>Ref: 60737884 - Comision plata lei / Nr. OP: 308 / FOTOAMA SRL</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5098381.60737916</ref>
+      <value_date>2025-07-18</value_date>
+      <booking_date>2025-07-18</booking_date>
+      <details>Ref: 60737916 - Plata in lei/Nr. OP:309 / Data decontarii: 21-07-2025 / in fav. VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA: Plata facturii ASV-22-25/SOLO</details>
+      <debit>2551.42</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5098381.60737916</ref>
+      <value_date>2025-07-18</value_date>
+      <booking_date>2025-07-18</booking_date>
+      <details>Ref: 60737916 - Comision plata lei / Nr. OP: 309 / VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34272835.60771714</ref>
+      <value_date>2025-07-21</value_date>
+      <booking_date>2025-07-21</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / OPENAI              SAN FRANCISCO, suma trn. 10.00 USD ID :XM000001427813 19-07-2025, 1 EUR = 5.1748 RON</details>
+      <debit>44.71</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34278146.60783603</ref>
+      <value_date>2025-07-21</value_date>
+      <booking_date>2025-07-21</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *QT8UHW8VW2  DUBLIN ID :XM000001429104 21-07-2025, 1 EUR = 5.0736 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5060527.60784650</ref>
+      <value_date>2025-07-21</value_date>
+      <booking_date>2025-07-21</booking_date>
+      <details>Incasare OP/ 4093016/NETOPIA FINANCIAL SERVICES SA/43131360 / RO73BFER121100048617RO01/  /ROC/BatchId 51727158//RFB/913</details>
+      <debit>0.00</debit>
+      <credit>466.22</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5060848.60785123</ref>
+      <value_date>2025-07-21</value_date>
+      <booking_date>2025-07-21</booking_date>
+      <details>Incasare OP/ 871/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>1710.23</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5061127.60785402</ref>
+      <value_date>2025-07-21</value_date>
+      <booking_date>2025-07-21</booking_date>
+      <details>Incasare OP/ MC000041547792/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1172.40</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5105844.60821717</ref>
+      <value_date>2025-07-22</value_date>
+      <booking_date>2025-07-22</booking_date>
+      <details>Plata OP-310/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>4831.74</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5107498.60830546</ref>
+      <value_date>2025-07-22</value_date>
+      <booking_date>2025-07-22</booking_date>
+      <details>Ref: 60830546 - Plata in lei/Nr. OP:311 / Data decontarii: 22-07-2025 / in fav. CONFRASILVAS SRL: F:233305 RETUR PRODUS</details>
+      <debit>149.99</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5107498.60830546</ref>
+      <value_date>2025-07-22</value_date>
+      <booking_date>2025-07-22</booking_date>
+      <details>Ref: 60830546 - Comision plata lei / Nr. OP: 311 / CONFRASILVAS SRL</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5064654.60830846</ref>
+      <value_date>2025-07-22</value_date>
+      <booking_date>2025-07-22</booking_date>
+      <details>Incasare OP/ 739/VIKING SRL/7029829 / RO52BTRLRONCRT0V08000901/  /ROC/PROFORMA 231544</details>
+      <debit>0.00</debit>
+      <credit>393.32</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5066127.60835712</ref>
+      <value_date>2025-07-22</value_date>
+      <booking_date>2025-07-22</booking_date>
+      <details>Incasare OP/ 4093727/NETOPIA FINANCIAL SERVICES SA/43131360 / RO73BFER121100048617RO01/  /ROC/BatchId 51758134//RFB/566</details>
+      <debit>0.00</debit>
+      <credit>380.49</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5066396.60835983</ref>
+      <value_date>2025-07-22</value_date>
+      <booking_date>2025-07-22</booking_date>
+      <details>Incasare OP/ 719/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>166.75</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5066769.60836356</ref>
+      <value_date>2025-07-22</value_date>
+      <booking_date>2025-07-22</booking_date>
+      <details>Incasare OP/ MC000041582751/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>2115.22</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5071007.60870677</ref>
+      <value_date>2025-07-23</value_date>
+      <booking_date>2025-07-23</booking_date>
+      <details>Incasare OP/ MC000041607469/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1151.58</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5072116.60875080</ref>
+      <value_date>2025-07-23</value_date>
+      <booking_date>2025-07-23</booking_date>
+      <details>Incasare OP/ 24/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT094</details>
+      <debit>0.00</debit>
+      <credit>2832.42</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5073108.60900868</ref>
+      <value_date>2025-07-24</value_date>
+      <booking_date>2025-07-24</booking_date>
+      <details>Incasare OP/ 21/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT095</details>
+      <debit>0.00</debit>
+      <credit>183.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5075751.60909089</ref>
+      <value_date>2025-07-24</value_date>
+      <booking_date>2025-07-24</booking_date>
+      <details>Incasare OP/ MC000041632573/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1349.53</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5121894.60936966</ref>
+      <value_date>2025-07-25</value_date>
+      <booking_date>2025-07-25</booking_date>
+      <details>Ref: 60936966 - Plata in lei/Nr. OP:312 / Data decontarii: 25-07-2025 / in fav. FOTOAMA SRL: Factura FAE091</details>
+      <debit>2378.13</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5121894.60936966</ref>
+      <value_date>2025-07-25</value_date>
+      <booking_date>2025-07-25</booking_date>
+      <details>Ref: 60936966 - Comision plata lei / Nr. OP: 312 / FOTOAMA SRL</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34367862.60943714</ref>
+      <value_date>2025-07-25</value_date>
+      <booking_date>2025-07-25</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / PayU*eMAG.ro        Bucuresti ID :XM000001435394 24-07-2025</details>
+      <debit>2499.99</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5078644.60945535</ref>
+      <value_date>2025-07-25</value_date>
+      <booking_date>2025-07-25</booking_date>
+      <details>Incasare OP/ 249/VHV MARCOM S R L/38926158 / RO51BTRLRONCRT0434805701/  /ROC/Fatura proforma 231569</details>
+      <debit>0.00</debit>
+      <credit>1210.00</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5124584.60945820</ref>
+      <value_date>2025-07-25</value_date>
+      <booking_date>2025-07-25</booking_date>
+      <details>Plata OP-313/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>11684.09</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5081607.60954923</ref>
+      <value_date>2025-07-25</value_date>
+      <booking_date>2025-07-25</booking_date>
+      <details>Incasare OP/ MC000041665186/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1176.16</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5129051.60958365</ref>
+      <value_date>2025-07-25</value_date>
+      <booking_date>2025-07-25</booking_date>
+      <details>Ref: 60958365 - Plata in lei/Nr. OP:314 / Data decontarii: 28-07-2025 / in fav. MURARIU CLAUDIU: F:233355 RETUR PRODUS</details>
+      <debit>361.99</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5129051.60958365</ref>
+      <value_date>2025-07-25</value_date>
+      <booking_date>2025-07-25</booking_date>
+      <details>Ref: 60958365 - Comision plata lei / Nr. OP: 314 / MURARIU CLAUDIU</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5082091.60958832</ref>
+      <value_date>2025-07-25</value_date>
+      <booking_date>2025-07-25</booking_date>
+      <details>Incasare OP/ 776/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>455.69</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5130533.60982077</ref>
+      <value_date>2025-07-28</value_date>
+      <booking_date>2025-07-28</booking_date>
+      <details>Plata OP-315/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>6221.62</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34389145.60990547</ref>
+      <value_date>2025-07-28</value_date>
+      <booking_date>2025-07-28</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / EASY SALES          Sat Rosu ID :XM000001439260 26-07-2025</details>
+      <debit>235.34</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34389682.60991152</ref>
+      <value_date>2025-07-28</value_date>
+      <booking_date>2025-07-28</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *L5ZLMVLVW2  Dublin ID :XM000001438827 25-07-2025, 1 EUR = 5.0731 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5087343.60998820</ref>
+      <value_date>2025-07-28</value_date>
+      <booking_date>2025-07-28</booking_date>
+      <details>Incasare OP/ 46/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT096</details>
+      <debit>0.00</debit>
+      <credit>253.83</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5088317.61002968</ref>
+      <value_date>2025-07-28</value_date>
+      <booking_date>2025-07-28</booking_date>
+      <details>Incasare OP/ 4099450/NETOPIA FINANCIAL SERVICES SA/43131360 / RO73BFER121100048617RO01/  /ROC/BatchId 51952111//RFB/941</details>
+      <debit>0.00</debit>
+      <credit>135.60</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5088575.61003419</ref>
+      <value_date>2025-07-28</value_date>
+      <booking_date>2025-07-28</booking_date>
+      <details>Incasare OP/ 864/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>99.32</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5088639.61003483</ref>
+      <value_date>2025-07-28</value_date>
+      <booking_date>2025-07-28</booking_date>
+      <details>Incasare OP/ MC000041691911/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>2797.24</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5093993.61054539</ref>
+      <value_date>2025-07-29</value_date>
+      <booking_date>2025-07-29</booking_date>
+      <details>Incasare OP/ MC000041723016/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1341.70</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5142115.61071195</ref>
+      <value_date>2025-07-30</value_date>
+      <booking_date>2025-07-30</booking_date>
+      <details>Ref: 61071195 - Plata in lei/Nr. OP:316 / Data decontarii: 30-07-2025 / in fav. OBSID SRL: Imprumut conform contract nr. 01/29.07.2025</details>
+      <debit>12500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5142115.61071195</ref>
+      <value_date>2025-07-30</value_date>
+      <booking_date>2025-07-30</booking_date>
+      <details>Ref: 61071195 - Comision plata lei / Nr. OP: 316 / OBSID SRL</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5097340.61091809</ref>
+      <value_date>2025-07-30</value_date>
+      <booking_date>2025-07-30</booking_date>
+      <details>Incasare OP/ MC000041744821/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>2022.04</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5098827.61097377</ref>
+      <value_date>2025-07-30</value_date>
+      <booking_date>2025-07-30</booking_date>
+      <details>Incasare OP/ 766/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>451.77</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5099563.61098239</ref>
+      <value_date>2025-07-30</value_date>
+      <booking_date>2025-07-30</booking_date>
+      <details>Incasare OP/ 785/VIKING SRL/7029829 / RO52BTRLRONCRT0V08000901/  /ROC/PROF 231619</details>
+      <debit>0.00</debit>
+      <credit>4499.84</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5147794.61123194</ref>
+      <value_date>2025-07-31</value_date>
+      <booking_date>2025-07-31</booking_date>
+      <details>Plata OP-317/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>8022.56</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34464385.61131762</ref>
+      <value_date>2025-07-31</value_date>
+      <booking_date>2025-07-31</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / DECATHLON BRASOV LN BRASOV ID :XM000001446378 30-07-2025</details>
+      <debit>111.95</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5104781.61138620</ref>
+      <value_date>2025-07-31</value_date>
+      <booking_date>2025-07-31</booking_date>
+      <details>Incasare OP/ MC000041774894/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1064.05</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34467013.61141939</ref>
+      <value_date>2025-07-31</value_date>
+      <booking_date>2025-07-31</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *KYQ92WLVW2  DUBLIN ID :XM000001447076 31-07-2025, 1 EUR = 5.0761 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5105621.61143597</ref>
+      <value_date>2025-07-31</value_date>
+      <booking_date>2025-07-31</booking_date>
+      <details>Incasare OP/ 24/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT097</details>
+      <debit>0.00</debit>
+      <credit>2792.08</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5105673.61143649</ref>
+      <value_date>2025-07-31</value_date>
+      <booking_date>2025-07-31</booking_date>
+      <details>Incasare OP/ 3/QZINFOOD S R L/51517703 / RO07BTRLRONCRT0CX7519301/  /ROC/Plata factura proforma ne NRTTPF 231626 din 31/07/2025</details>
+      <debit>0.00</debit>
+      <credit>369.90</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5110012.61298546</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Incasare OP/ MC000041806913/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>2058.77</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5110380.61298915</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Incasare OP/ 868/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>373.72</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5110686.61299223</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Incasare OP/ 20/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT098</details>
+      <debit>0.00</debit>
+      <credit>527.55</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5156788.61303113</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Ref: 61303113 - Plata in lei/Nr. OP:318 / Data decontarii: 04-08-2025 / in fav. DELIVERY SOLUTIONS S.A.: 260500091981</details>
+      <debit>2127.34</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5156788.61303113</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Ref: 61303113 - Comision plata lei / Nr. OP: 318 / DELIVERY SOLUTIONS S.A.</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5111430.61303787</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Incasare OP/ 4104261/NETOPIA FINANCIAL SERVICES SA/43131360 / RO73BFER121100048617RO01/  /ROC/BatchId 52014523//RFB/676</details>
+      <debit>0.00</debit>
+      <credit>2045.47</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRA.34607056.61309849</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Cost Administrare Card 1710</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRA.34607057.61309850</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Cost Administrare Card 5273</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRA.34608659.61311453</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Comision Alerta SMS 1710</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRA.34608660.61311454</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Comision Alerta SMS 5273</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCOMADMCC.34626366.61331169</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Incasare comision administrare cont curent RO72BRMA080102480255RO01 aferent lunii AUG 2025</details>
+      <debit>7.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCOMADMIB.34634393.61339196</ref>
+      <value_date>2025-08-01</value_date>
+      <booking_date>2025-08-01</booking_date>
+      <details>Incasare comision administrare Internet Banking NORTIA TRADING SRL aferent lunii AUG 2025</details>
+      <debit>20.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5158913.61358509</ref>
+      <value_date>2025-08-04</value_date>
+      <booking_date>2025-08-04</booking_date>
+      <details>Ref: 61358509 - Plata in lei/Nr. OP:319 / Data decontarii: 04-08-2025 / in fav. FOTOAMA SRL: Factura FAE092</details>
+      <debit>2358.18</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5158913.61358509</ref>
+      <value_date>2025-08-04</value_date>
+      <booking_date>2025-08-04</booking_date>
+      <details>Ref: 61358509 - Comision plata lei / Nr. OP: 319 / FOTOAMA SRL</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5114342.61366053</ref>
+      <value_date>2025-08-04</value_date>
+      <booking_date>2025-08-04</booking_date>
+      <details>Incasare OP/ 47/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT099</details>
+      <debit>0.00</debit>
+      <credit>421.69</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5119867.61384672</ref>
+      <value_date>2025-08-04</value_date>
+      <booking_date>2025-08-04</booking_date>
+      <details>Incasare OP/ 850/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>638.35</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5120487.61385432</ref>
+      <value_date>2025-08-04</value_date>
+      <booking_date>2025-08-04</booking_date>
+      <details>Incasare OP/ 4106154/NETOPIA FINANCIAL SERVICES SA/43131360 / RO73BFER121100048617RO01/  /ROC/BatchId 52111808//RFB/1196</details>
+      <debit>0.00</debit>
+      <credit>186.10</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5165045.61421426</ref>
+      <value_date>2025-08-05</value_date>
+      <booking_date>2025-08-05</booking_date>
+      <details>Ref: 61421426 - Plata in lei/Nr. OP:320 / Data decontarii: 05-08-2025 / in fav. VELEKO S.R.L.: Plata facturii VLF 0001</details>
+      <debit>1258.30</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5165045.61421426</ref>
+      <value_date>2025-08-05</value_date>
+      <booking_date>2025-08-05</booking_date>
+      <details>Ref: 61421426 - Comision plata lei / Nr. OP: 320 / VELEKO S.R.L.</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34691271.61427632</ref>
+      <value_date>2025-08-05</value_date>
+      <booking_date>2025-08-05</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / PADDLE.NET* N8N CLOULISBOA, suma trn. 29.04 EUR ID :XM000001454724 04-08-2025, 1 EUR = 5.2717 RON</details>
+      <debit>153.09</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5123021.61429419</ref>
+      <value_date>2025-08-05</value_date>
+      <booking_date>2025-08-05</booking_date>
+      <details>Incasare OP/ MC000041857154/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1773.80</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5125561.61436846</ref>
+      <value_date>2025-08-05</value_date>
+      <booking_date>2025-08-05</booking_date>
+      <details>Incasare OP/ 894429575/145777/DANTE INTERNATIONAL SA/14399840 / RO73INGB0001008199078940/  /ROC/Notificare plata 05.08.2025 RMKT6 . .//RFB/</details>
+      <debit>0.00</debit>
+      <credit>6051.51</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5126200.61437836</ref>
+      <value_date>2025-08-05</value_date>
+      <booking_date>2025-08-05</booking_date>
+      <details>Incasare OP/ MC000041862093/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1042.55</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34694110.61440663</ref>
+      <value_date>2025-08-05</value_date>
+      <booking_date>2025-08-05</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *HTYCVWQVW2  DUBLIN ID :XM000001455039 05-08-2025, 1 EUR = 5.0736 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5126729.61441659</ref>
+      <value_date>2025-08-05</value_date>
+      <booking_date>2025-08-05</booking_date>
+      <details>Incasare OP/ 894479479/97/VELEKO S.R.L./48890531 / RO61INGB0000999914525660/  /ROC/Restituire contravaloare chitanta VLC0001//RFB/</details>
+      <debit>0.00</debit>
+      <credit>41.64</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34713258.61469160</ref>
+      <value_date>2025-08-06</value_date>
+      <booking_date>2025-08-06</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *Y8XRWWQVW2  FACEBOOK.COM ID :XM000001456750 05-08-2025, 1 EUR = 5.0736 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5130745.61512080</ref>
+      <value_date>2025-08-06</value_date>
+      <booking_date>2025-08-06</booking_date>
+      <details>Incasare OP/ MC000041886340/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>545.97</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5132359.61553111</ref>
+      <value_date>2025-08-06</value_date>
+      <booking_date>2025-08-06</booking_date>
+      <details>Incasare OP/ 4108968/NETOPIA FINANCIAL SERVICES SA/43131360 / RO73BFER121100048617RO01/  /ROC/BatchId 52173753//RFB/545</details>
+      <debit>0.00</debit>
+      <credit>138.35</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5175309.61593166</ref>
+      <value_date>2025-08-06</value_date>
+      <booking_date>2025-08-06</booking_date>
+      <details>Ref: 61593166 - Plata in lei/Nr. OP:321 / Data decontarii: 07-08-2025 / in fav. HANNESON EXP CONT: Factura 1382</details>
+      <debit>400.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5175309.61593166</ref>
+      <value_date>2025-08-06</value_date>
+      <booking_date>2025-08-06</booking_date>
+      <details>Ref: 61593166 - Comision plata lei / Nr. OP: 321 / HANNESON EXP CONT</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5175311.61593195</ref>
+      <value_date>2025-08-06</value_date>
+      <booking_date>2025-08-06</booking_date>
+      <details>Ref: 61593195 - Plata in lei/Nr. OP:322 / Data decontarii: 07-08-2025 / in fav. VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA: Factura ASV-23-25/SOLO(restul prin chitanta)</details>
+      <debit>897.21</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5175311.61593195</ref>
+      <value_date>2025-08-06</value_date>
+      <booking_date>2025-08-06</booking_date>
+      <details>Ref: 61593195 - Comision plata lei / Nr. OP: 322 / VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34839083.61617855</ref>
+      <value_date>2025-08-07</value_date>
+      <booking_date>2025-08-07</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / ONRC                BUCURESTI ID :XM000001456130 05-08-2025</details>
+      <debit>20.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5133889.61619534</ref>
+      <value_date>2025-08-07</value_date>
+      <booking_date>2025-08-07</booking_date>
+      <details>Incasare OP/ 24/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT100</details>
+      <debit>0.00</debit>
+      <credit>2197.60</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5137016.61626769</ref>
+      <value_date>2025-08-07</value_date>
+      <booking_date>2025-08-07</booking_date>
+      <details>Incasare OP/ MC000041907586/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>475.41</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34843852.61635966</ref>
+      <value_date>2025-08-07</value_date>
+      <booking_date>2025-08-07</booking_date>
+      <details>5157*******31710 POS Returnare fonduri / FACEBK *HTYCVWQVW2\Mn Road\DUBLIN ID : 07-08-2025, 1 EUR = 5.0761 RON</details>
+      <debit>-500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5183648.61670625</ref>
+      <value_date>2025-08-08</value_date>
+      <booking_date>2025-08-08</booking_date>
+      <details>Ref: 61670625 - Plata in lei/Nr. OP:323 / Data decontarii: 08-08-2025 / in fav. TUDORACHE MARIN MARIAN: F:233550 RETUR PRODUS</details>
+      <debit>63.26</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5183648.61670625</ref>
+      <value_date>2025-08-08</value_date>
+      <booking_date>2025-08-08</booking_date>
+      <details>Ref: 61670625 - Comision plata lei / Nr. OP: 323 / TUDORACHE MARIN MARIAN</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5144110.61676445</ref>
+      <value_date>2025-08-08</value_date>
+      <booking_date>2025-08-08</booking_date>
+      <details>Incasare OP/ MC000041938753/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>2316.92</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5145928.61678554</ref>
+      <value_date>2025-08-08</value_date>
+      <booking_date>2025-08-08</booking_date>
+      <details>Incasare OP/ 17/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT101</details>
+      <debit>0.00</debit>
+      <credit>133.14</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5147699.61685965</ref>
+      <value_date>2025-08-08</value_date>
+      <booking_date>2025-08-08</booking_date>
+      <details>Incasare OP/ 841/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>209.78</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5189251.61710927</ref>
+      <value_date>2025-08-11</value_date>
+      <booking_date>2025-08-11</booking_date>
+      <details>Ref: 61710927 - Plata in lei/Nr. OP:324 / Data decontarii: 11-08-2025 / in fav. FOTOAMA SRL: Factura FAE093</details>
+      <debit>811.61</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5189251.61710927</ref>
+      <value_date>2025-08-11</value_date>
+      <booking_date>2025-08-11</booking_date>
+      <details>Ref: 61710927 - Comision plata lei / Nr. OP: 324 / FOTOAMA SRL</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5151814.61720445</ref>
+      <value_date>2025-08-11</value_date>
+      <booking_date>2025-08-11</booking_date>
+      <details>Incasare OP/ 42/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT102</details>
+      <debit>0.00</debit>
+      <credit>425.08</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.34893782.61725758</ref>
+      <value_date>2025-08-11</value_date>
+      <booking_date>2025-08-11</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *WTDRFVUVW2  DUBLIN ID :XM000001463788 10-08-2025, 1 EUR = 5.0715 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5155178.61732615</ref>
+      <value_date>2025-08-11</value_date>
+      <booking_date>2025-08-11</booking_date>
+      <details>Incasare OP/ MC000041969462/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>3376.54</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5157334.61739616</ref>
+      <value_date>2025-08-11</value_date>
+      <booking_date>2025-08-11</booking_date>
+      <details>Incasare OP/ 4113269/NETOPIA FINANCIAL SERVICES SA/43131360 / RO73BFER121100048617RO01/  /ROC/BatchId 52304098//RFB/828</details>
+      <debit>0.00</debit>
+      <credit>960.02</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5158616.61741134</ref>
+      <value_date>2025-08-11</value_date>
+      <booking_date>2025-08-11</booking_date>
+      <details>Incasare OP/ 776/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>390.12</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5195309.61771980</ref>
+      <value_date>2025-08-12</value_date>
+      <booking_date>2025-08-12</booking_date>
+      <details>Ref: 61771980 - Plata in lei/Nr. OP:325 / Data decontarii: 12-08-2025 / in fav. GLS General Logistics Systems Romania SRL: Factura 5400102741</details>
+      <debit>4621.21</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5195309.61771980</ref>
+      <value_date>2025-08-12</value_date>
+      <booking_date>2025-08-12</booking_date>
+      <details>Ref: 61771980 - Comision plata lei / Nr. OP: 325 / GLS General Logistics Systems Romania SRL</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5163117.61788149</ref>
+      <value_date>2025-08-12</value_date>
+      <booking_date>2025-08-12</booking_date>
+      <details>Incasare OP/ MC000042001817/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1813.44</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5164720.61793707</ref>
+      <value_date>2025-08-12</value_date>
+      <booking_date>2025-08-12</booking_date>
+      <details>Incasare OP/ 653/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>268.90</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5203560.61828005</ref>
+      <value_date>2025-08-13</value_date>
+      <booking_date>2025-08-13</booking_date>
+      <details>Plata OP-326/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>6678.63</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5170810.61831846</ref>
+      <value_date>2025-08-13</value_date>
+      <booking_date>2025-08-13</booking_date>
+      <details>Incasare OP/ MC000042024319/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>938.95</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5171884.61838689</ref>
+      <value_date>2025-08-13</value_date>
+      <booking_date>2025-08-13</booking_date>
+      <details>Incasare OP/ 743/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>96.74</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5176662.61871973</ref>
+      <value_date>2025-08-14</value_date>
+      <booking_date>2025-08-14</booking_date>
+      <details>Incasare OP/ 21/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT103</details>
+      <debit>0.00</debit>
+      <credit>2971.43</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5182111.61886612</ref>
+      <value_date>2025-08-14</value_date>
+      <booking_date>2025-08-14</booking_date>
+      <details>Incasare OP/ MC000042057291/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>814.05</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5217107.61927028</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Ref: 61927028 - Plata in lei/Nr. OP:327 / Data decontarii: 18-08-2025 / in fav. FOTOAMA SRL: Factura FAE096</details>
+      <debit>1130.68</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5217107.61927028</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Ref: 61927028 - Comision plata lei / Nr. OP: 327 / FOTOAMA SRL</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5217108.61927029</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Ref: 61927029 - Plata in lei/Nr. OP:328 / Data decontarii: 18-08-2025 / in fav. VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA: Factura ASV-24-25/SOLO(restul prin chitanta)</details>
+      <debit>1233.33</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5217108.61927029</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Ref: 61927029 - Comision plata lei / Nr. OP: 328 / VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5217110.61927031</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Ref: 61927031 - Plata in lei/Nr. OP:329 / Data decontarii: 18-08-2025 / in fav. VELEKO S.R.L.: Plata facturii VLF 0002</details>
+      <debit>567.26</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5217110.61927031</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Ref: 61927031 - Comision plata lei / Nr. OP: 329 / VELEKO S.R.L.</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5187617.61937481</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Incasare OP/ 42/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT104</details>
+      <debit>0.00</debit>
+      <credit>17.58</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35006850.61944946</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *E6YG4XUUW2  DUBLIN ID :XM000001473158 16-08-2025, 1 EUR = 5.0645 RON</details>
+      <debit>65.18</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35006979.61945078</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / OPENAI              SAN FRANCISCO, suma trn. 5.00 USD ID :XM000001472882 15-08-2025, 1 EUR = 5.1651 RON</details>
+      <debit>22.21</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35007400.61945503</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / OPENAI              SAN FRANCISCO, suma trn. 6.93 USD ID :XM000001472043 14-08-2025, 1 EUR = 5.1644 RON</details>
+      <debit>30.78</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35007401.61945504</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / OPENAI              SAN FRANCISCO, suma trn. 3.07 USD ID :XM000001472044 14-08-2025, 1 EUR = 5.1667 RON</details>
+      <debit>13.64</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35007494.61945599</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *YDP4FY8VW2  DUBLIN ID :XM000001472517 15-08-2025, 1 EUR = 5.0633 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35008336.61946458</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / OMV 1766            Brasov ID :XM000001473038 15-08-2025</details>
+      <debit>49.97</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5219478.61952262</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Plata OP-330/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>4502.93</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5192650.61954196</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Incasare OP/ MC000042088602/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1094.59</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5196257.61962652</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Incasare OP/ 17/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT105</details>
+      <debit>0.00</debit>
+      <credit>47.87</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5196332.61962727</ref>
+      <value_date>2025-08-18</value_date>
+      <booking_date>2025-08-18</booking_date>
+      <details>Incasare OP/ 967/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>369.64</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5223453.62009544</ref>
+      <value_date>2025-08-19</value_date>
+      <booking_date>2025-08-19</booking_date>
+      <details>Plata OP-331/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>4314.91</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5223843.62012162</ref>
+      <value_date>2025-08-19</value_date>
+      <booking_date>2025-08-19</booking_date>
+      <details>Ref: 62012162 - Plata in lei/Nr. OP:332 / Data decontarii: 19-08-2025 / in fav. LAZAR I CORNELIA PFA: F:25014</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5223843.62012162</ref>
+      <value_date>2025-08-19</value_date>
+      <booking_date>2025-08-19</booking_date>
+      <details>Ref: 62012162 - Comision plata lei / Nr. OP: 332 / LAZAR I CORNELIA PFA</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5223857.62012210</ref>
+      <value_date>2025-08-19</value_date>
+      <booking_date>2025-08-19</booking_date>
+      <details>Ref: 62012210 - Plata in lei/Nr. OP:333 / Data decontarii: 19-08-2025 / in fav. DELIVERY SOLUTIONS S.A.: 260500103588</details>
+      <debit>1288.81</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5223857.62012210</ref>
+      <value_date>2025-08-19</value_date>
+      <booking_date>2025-08-19</booking_date>
+      <details>Ref: 62012210 - Comision plata lei / Nr. OP: 333 / DELIVERY SOLUTIONS S.A.</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5201309.62020772</ref>
+      <value_date>2025-08-19</value_date>
+      <booking_date>2025-08-19</booking_date>
+      <details>Incasare OP/ MC000042123537/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1542.18</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5202181.62025402</ref>
+      <value_date>2025-08-19</value_date>
+      <booking_date>2025-08-19</booking_date>
+      <details>Incasare OP/ 4121702/NETOPIA FINANCIAL SERVICES SA/43131360 / RO73BFER121100048617RO01/  /ROC/BatchId 52500782//RFB/1296</details>
+      <debit>0.00</debit>
+      <credit>1645.96</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5202656.62025931</ref>
+      <value_date>2025-08-19</value_date>
+      <booking_date>2025-08-19</booking_date>
+      <details>Incasare OP/ NOTPROVIDED/EDITORIAL WEST SB SRL/0 / RO53PIRB370171B355001000/  /ROC/prof NR TTPF231745</details>
+      <debit>0.00</debit>
+      <credit>330.50</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5205046.62057854</ref>
+      <value_date>2025-08-20</value_date>
+      <booking_date>2025-08-20</booking_date>
+      <details>Incasare OP/ 898515906/168123/DANTE INTERNATIONAL SA/14399840 / RO73INGB0001008199078940/  /ROC/Notificare plata 19.08.2025 RMKT7 . .//RFB/</details>
+      <debit>0.00</debit>
+      <credit>5099.01</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5229056.62059040</ref>
+      <value_date>2025-08-20</value_date>
+      <booking_date>2025-08-20</booking_date>
+      <details>Plata OP-334/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>8366.20</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5207194.62064492</ref>
+      <value_date>2025-08-20</value_date>
+      <booking_date>2025-08-20</booking_date>
+      <details>Incasare OP/ MC000042144618/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>122.67</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35098575.62096686</ref>
+      <value_date>2025-08-21</value_date>
+      <booking_date>2025-08-21</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *DQRQUY8VW2  DUBLIN ID :XM000001480457 20-08-2025, 1 EUR = 5.0587 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5210676.62098527</ref>
+      <value_date>2025-08-21</value_date>
+      <booking_date>2025-08-21</booking_date>
+      <details>Incasare OP/ 24/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT106</details>
+      <debit>0.00</debit>
+      <credit>1498.74</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5212976.62104709</ref>
+      <value_date>2025-08-21</value_date>
+      <booking_date>2025-08-21</booking_date>
+      <details>Incasare OP/ MC000042168555/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>379.58</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5236978.62111774</ref>
+      <value_date>2025-08-21</value_date>
+      <booking_date>2025-08-21</booking_date>
+      <details>Ref: 62111774 - Plata in lei/Nr. OP:335 / Data decontarii: 22-08-2025 / in fav. ADI si FLO GARAJ S.R.L.: FFAF-1513</details>
+      <debit>801.99</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5236978.62111774</ref>
+      <value_date>2025-08-21</value_date>
+      <booking_date>2025-08-21</booking_date>
+      <details>Ref: 62111774 - Comision plata lei / Nr. OP: 335 / ADI si FLO GARAJ S.R.L.</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIT.GTX.5236987.62111795</ref>
+      <value_date>2025-08-21</value_date>
+      <booking_date>2025-08-21</booking_date>
+      <details>Ref: 62111795 - Plata in lei/Nr. OP:336 / Data decontarii: 22-08-2025 / in fav. TREZORERIA OPERATIVA A MUN BRASOV: TVA LUNAR 07.2025</details>
+      <debit>3531.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIT.GTX.5236987.62111795</ref>
+      <value_date>2025-08-21</value_date>
+      <booking_date>2025-08-21</booking_date>
+      <details>Ref: 62111795 - Comision plata lei / Nr. OP: 336 / TREZORERIA OPERATIVA A MUN BRASOV</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5240093.62145287</ref>
+      <value_date>2025-08-22</value_date>
+      <booking_date>2025-08-22</booking_date>
+      <details>Ref: 62145287 - Plata in lei/Nr. OP:337 / Data decontarii: 22-08-2025 / in fav. FOTOAMA SRL: Factura FAE097</details>
+      <debit>1678.78</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5240093.62145287</ref>
+      <value_date>2025-08-22</value_date>
+      <booking_date>2025-08-22</booking_date>
+      <details>Ref: 62145287 - Comision plata lei / Nr. OP: 337 / FOTOAMA SRL</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5218458.62146673</ref>
+      <value_date>2025-08-22</value_date>
+      <booking_date>2025-08-22</booking_date>
+      <details>Incasare OP/ MC000042186293/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>2031.86</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5220207.62152575</ref>
+      <value_date>2025-08-22</value_date>
+      <booking_date>2025-08-22</booking_date>
+      <details>Incasare OP/ 859/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>961.35</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5245188.62180719</ref>
+      <value_date>2025-08-25</value_date>
+      <booking_date>2025-08-25</booking_date>
+      <details>Plata OP-338/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>14755.13</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5226395.62198990</ref>
+      <value_date>2025-08-25</value_date>
+      <booking_date>2025-08-25</booking_date>
+      <details>Incasare OP/ MC000042218974/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1497.75</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5227208.62203562</ref>
+      <value_date>2025-08-25</value_date>
+      <booking_date>2025-08-25</booking_date>
+      <details>Incasare OP/ 760/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>324.83</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35177078.62241160</ref>
+      <value_date>2025-08-26</value_date>
+      <booking_date>2025-08-26</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *L8EZ8Z8VW2  DUBLIN ID :XM000001488014 25-08-2025, 1 EUR = 5.0556 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5231766.62249021</ref>
+      <value_date>2025-08-26</value_date>
+      <booking_date>2025-08-26</booking_date>
+      <details>Incasare OP/ MC000042247164/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>319.90</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35198059.62280871</ref>
+      <value_date>2025-08-27</value_date>
+      <booking_date>2025-08-27</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / EASY SALES          Sat Rosu ID :XM000001488723 26-08-2025</details>
+      <debit>238.49</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5237407.62290284</ref>
+      <value_date>2025-08-27</value_date>
+      <booking_date>2025-08-27</booking_date>
+      <details>Incasare OP/ MC000042269688/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>959.47</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5239189.62320880</ref>
+      <value_date>2025-08-28</value_date>
+      <booking_date>2025-08-28</booking_date>
+      <details>Incasare OP/ 26/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT107</details>
+      <debit>0.00</debit>
+      <credit>3867.25</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5241307.62327221</ref>
+      <value_date>2025-08-28</value_date>
+      <booking_date>2025-08-28</booking_date>
+      <details>Incasare OP/ MC000042297524/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1686.80</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5242737.62332456</ref>
+      <value_date>2025-08-28</value_date>
+      <booking_date>2025-08-28</booking_date>
+      <details>Incasare OP/ 823/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>215.42</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5266606.62354179</ref>
+      <value_date>2025-08-29</value_date>
+      <booking_date>2025-08-29</booking_date>
+      <details>Ref: 62354179 - Plata in lei/Nr. OP:339 / Data decontarii: 29-08-2025 / in fav. VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA: Factura ASV-25-25/SOLO(restul prin chitanta)</details>
+      <debit>1444.93</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5266606.62354179</ref>
+      <value_date>2025-08-29</value_date>
+      <booking_date>2025-08-29</booking_date>
+      <details>Ref: 62354179 - Comision plata lei / Nr. OP: 339 / VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5267275.62357447</ref>
+      <value_date>2025-08-29</value_date>
+      <booking_date>2025-08-29</booking_date>
+      <details>Plata OP-340/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>4159.41</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5247195.62370092</ref>
+      <value_date>2025-08-29</value_date>
+      <booking_date>2025-08-29</booking_date>
+      <details>Incasare OP/ MC000042329902/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1204.50</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5273868.62528076</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Ref: 62528076 - Plata in lei/Nr. OP:341 / Data decontarii: 01-09-2025 / in fav. FOTOAMA SRL: Factura FAE098</details>
+      <debit>1753.49</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5273868.62528076</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Ref: 62528076 - Comision plata lei / Nr. OP: 341 / FOTOAMA SRL</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35386110.62540811</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *CQ2R8YUUW2  DUBLIN ID :XM000001496515 30-08-2025, 1 EUR = 5.0767 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35386685.62541388</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>5157*******31710 ATM Retragere Numerar / ATM 044 BRASOV ASTRABRASOV ID :XM000001497231 31-08-2025</details>
+      <debit>2000.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35386685.62541388</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Com. 5157*******31710 ATM Retragere Numerar / ATM 044 BRASOV ASTRABRASOV ID :XM000001497231 31-08-2025</details>
+      <debit>6.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5254686.62547176</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Incasare OP/ MC000042363915/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>643.79</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5257200.62553100</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Incasare OP/ 890/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>402.99</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRA.35407206.62572470</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Comision Alerta SMS 1710</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRA.35407207.62572471</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Comision Alerta SMS 5273</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRA.35413590.62578861</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Cost Administrare Card 1710</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRA.35413723.62578994</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Cost Administrare Card 5273</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCOMADMCC.35416504.62585356</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Incasare comision administrare cont curent RO72BRMA080102480255RO01 aferent lunii SEP 2025</details>
+      <debit>7.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCOMADMIB.35430332.62599184</ref>
+      <value_date>2025-09-01</value_date>
+      <booking_date>2025-09-01</booking_date>
+      <details>Incasare comision administrare Internet Banking NORTIA TRADING SRL aferent lunii SEP 2025</details>
+      <debit>20.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5279461.62619022</ref>
+      <value_date>2025-09-02</value_date>
+      <booking_date>2025-09-02</booking_date>
+      <details>Ref: 62619022 - Plata in lei/Nr. OP:342 / Data decontarii: 02-09-2025 / in fav. DELIVERY SOLUTIONS S.A.: 260500115191</details>
+      <debit>1732.97</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5279461.62619022</ref>
+      <value_date>2025-09-02</value_date>
+      <booking_date>2025-09-02</booking_date>
+      <details>Ref: 62619022 - Comision plata lei / Nr. OP: 342 / DELIVERY SOLUTIONS S.A.</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5262152.62632821</ref>
+      <value_date>2025-09-02</value_date>
+      <booking_date>2025-09-02</booking_date>
+      <details>Incasare OP/ MC000042382206/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>735.43</credit>
+    </movement>
+<movement>
+      <ref>D0CI.GTX.5284520.62670384</ref>
+      <value_date>2025-09-03</value_date>
+      <booking_date>2025-09-03</booking_date>
+      <details>Plata OP-343/ NORTIA COMPANY SRL : FACT MARFA / Cont coresp. RO05BRMA0080008218900000</details>
+      <debit>5980.55</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5268380.62682277</ref>
+      <value_date>2025-09-03</value_date>
+      <booking_date>2025-09-03</booking_date>
+      <details>Incasare OP/ MC000042395332/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>162.84</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5270912.62712995</ref>
+      <value_date>2025-09-04</value_date>
+      <booking_date>2025-09-04</booking_date>
+      <details>Incasare OP/ 901755056/179093/DANTE INTERNATIONAL SA/14399840 / RO73INGB0001008199078940/  /ROC/No.435839076/27.8.2025 . .//RFB/</details>
+      <debit>0.00</debit>
+      <credit>4557.21</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5272164.62715651</ref>
+      <value_date>2025-09-04</value_date>
+      <booking_date>2025-09-04</booking_date>
+      <details>Incasare OP/ 38/RIDE IT SRL/30231171 / RO40RNCB0205127569800001/  /ROC/plata factura NRT108</details>
+      <debit>0.00</debit>
+      <credit>2269.49</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5274148.62721931</ref>
+      <value_date>2025-09-04</value_date>
+      <booking_date>2025-09-04</booking_date>
+      <details>Incasare OP/ MC000042412559/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>665.56</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5275452.62727565</ref>
+      <value_date>2025-09-04</value_date>
+      <booking_date>2025-09-04</booking_date>
+      <details>Incasare OP/ 810/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>137.12</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5294048.62824908</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>Ref: 62824908 - Plata in lei/Nr. OP:344 / Data decontarii: 05-09-2025 / in fav. VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA: Factura ASV-26-25/SOLO(restul prin chitanta)</details>
+      <debit>900.30</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5294048.62824908</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>Ref: 62824908 - Comision plata lei / Nr. OP: 344 / VADUVA ALEXANDRU-STEFAN PERSOANA FIZICA AUTORIZATA</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5294049.62824909</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>Ref: 62824909 - Plata in lei/Nr. OP:345 / Data decontarii: 05-09-2025 / in fav. FOTOAMA SRL: Factura FAE099</details>
+      <debit>968.69</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5294049.62824909</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>Ref: 62824909 - Comision plata lei / Nr. OP: 345 / FOTOAMA SRL</details>
+      <debit>5.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5295566.62829431</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>Ref: 62829431 - Plata in lei/Nr. OP:346 / Data decontarii: 05-09-2025 / in fav. GLS General Logistics Systems Romania SRL: Factura 5400108289</details>
+      <debit>3301.32</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLIC.GTX.5295566.62829431</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>Ref: 62829431 - Comision plata lei / Nr. OP: 346 / GLS General Logistics Systems Romania SRL</details>
+      <debit>6.51</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35593503.62830465</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FACEBK *Y622EXUVW2  Dublin ID :XM000001504575 04-09-2025, 1 EUR = 5.0782 RON</details>
+      <debit>500.00</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>IZCARTRN.35596998.62844956</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>5157*******31710 Cumparaturi CARD / FLAGAS P.L BARTOLOMEBRASOV ID :XM000001505261 04-09-2025</details>
+      <debit>163.30</debit>
+      <credit>0.00</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5281708.62846589</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>Incasare OP/ 843/DELIVERY SOLUTIONS SA/23743772 / RO37RNCB0280150757100001/  /ROC/INCS RBS CF BORD</details>
+      <debit>0.00</debit>
+      <credit>89.93</credit>
+    </movement>
+<movement>
+      <ref>OLP1.5282040.62846921</ref>
+      <value_date>2025-09-05</value_date>
+      <booking_date>2025-09-05</booking_date>
+      <details>Incasare OP/ MC000042436343/GLS GENERAL LOGISTICS SYSTEMS ROMAN/21611392 / RO49BTRL03301202G43380XX/  TRANSFER RAMBURS TRANSFER R</details>
+      <debit>0.00</debit>
+      <credit>1017.49</credit>
+    </movement>
+</movements>
+  <closing_balance>
+    <balance>41925.49</balance>
+    <date>2025-09-06</date>
+  </closing_balance>
+</document>
