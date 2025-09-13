@@ -1305,22 +1305,40 @@ class FacturiApp(tk.Tk):
                 # Determină perioada pentru căutare în rezultatele noi
                 search_period = ref_month  # ex: "2025-07"
 
-                # Caută în rezultatele calculului pe perioade
-                period_result = None
+                # Caută în rezultatele calculului pe perioade (poate exista mai multe clustere în aceeași lună)
+                candidate_results = []
                 if hasattr(self, 'rezultate_emag_perioade'):
                     for result in self.rezultate_emag_perioade:
                         if result['period'] == search_period:
-                            period_result = result
-                            break
+                            candidate_results.append(result)
 
-                if period_result:
-                    print(f"eMag: ✓ GĂSIT rezultat pentru perioada {search_period}")
-                    dp_total = period_result['dp_total']
-                    voucher_total = period_result['dv_total']
-                    # Comisionul total din noul calcul (fără DCS)
-                    comision_total = period_result['comisioane_total']
-                    # DCS se adună (e storno negativ)
-                    storno_total = abs(period_result['dcs_total'])
+                chosen = None
+                if candidate_results:
+                    print(f"eMag: ✓ GĂSIT {len(candidate_results)} rezultat(e) pentru perioada {search_period} (clustere)")
+                    # Dacă avem suma din XML, alegem clusterul al cărui total prezis (cu DP din fișiere) este cel mai apropiat
+                    if suma_din_xml is not None:
+                        best_diff = float('inf')
+                        for r in candidate_results:
+                            predicted = float(suma_platita) + float(r['dv_total']) - float(r['comisioane_total']) + abs(float(r['dcs_total']))
+                            diff = abs(predicted - float(suma_din_xml))
+                            print(f"eMag: Cluster {r.get('cluster','default')} -> Predicted {predicted:.2f} vs XML {suma_din_xml:.2f} | diff {diff:.2f}")
+                            if diff < best_diff:
+                                best_diff = diff
+                                chosen = r
+                    # Fallback: dacă nu avem XML, alegem clusterul cu DCS zero (sau minim în abs) și DV mai mare
+                    if chosen is None:
+                        def cluster_sort_key(r):
+                            return (abs(float(r['dcs_total'])), -float(r['dv_total']))
+                        candidate_results.sort(key=cluster_sort_key)
+                        chosen = candidate_results[0]
+                        print(f"eMag: Fallback cluster ales: {chosen.get('cluster','default')} (DCS abs={abs(float(chosen['dcs_total'])):.2f}, DV={float(chosen['dv_total']):.2f})")
+
+                    # Acum extragem componentele din clusterul ales și CALCULĂM cu DP din fișierele perioadei
+                    voucher_total = float(chosen['dv_total'])
+                    comision_total = float(chosen['comisioane_total'])
+                    storno_total = abs(float(chosen['dcs_total']))
+                    # dp_total din clusterul lunar nu e relevant aici; folosim suma_platita (DP real al perioadei)
+                    dp_total = float(suma_platita)
                 else:
                     print(f"eMag: ❌ NU s-a găsit rezultat pentru perioada {search_period}")
                     print(f"eMag: Perioade disponibile: {[r['period'] for r in self.rezultate_emag_perioade] if hasattr(self, 'rezultate_emag_perioade') else 'N/A'}")
@@ -1331,9 +1349,10 @@ class FacturiApp(tk.Tk):
                     storno_total = 0
                 
                 # Folosește rezultatul calculat în noul sistem
-                if period_result:
-                    suma_finala_calculata = period_result['total_final']
-                    print(f"eMag: Rezultat din calculul pe perioade: {suma_finala_calculata:.2f} RON")
+                if candidate_results:
+                    # CALCUL FINAL: dp (din fișiere perioadă) + dv (cluster) - comisioane (cluster) + dcs (abs, cluster)
+                    suma_finala_calculata = float(dp_total) + float(voucher_total) - float(comision_total) + float(storno_total)
+                    print(f"eMag: Rezultat din calculul pe clustere: {suma_finala_calculata:.2f} RON")
                 else:
                     # Fallback: formula veche
                     suma_finala_calculata = dp_total - (comision_total - storno_total) + voucher_total
@@ -1622,6 +1641,29 @@ class FacturiApp(tk.Tk):
             """Grupează fișierele eMag pe perioade de raportare"""
             periods = {}
 
+            # Semnături de conținut pentru DP, pentru deduplicare pe aceeași perioadă
+            dp_signatures_per_period = {}
+
+            def compute_dp_signature(file_path):
+                """Calculează o semnătură de conținut pentru un fișier DP pentru deduplicare.
+                Include: nr. rânduri valide, suma (2z), suma absolută (2z), nr. Order ID unice."""
+                try:
+                    df = pd.read_excel(file_path, dtype=str)
+                    if 'Fraction value' not in df.columns:
+                        return None
+                    values = pd.to_numeric(df['Fraction value'], errors='coerce')
+                    values = values.dropna()
+                    row_count = int(values.shape[0])
+                    sum_val = round(float(values.sum()), 2)
+                    sum_abs = round(float(values.abs().sum()), 2)
+                    unique_orders = 0
+                    if 'Order ID' in df.columns:
+                        unique_orders = int(df['Order ID'].astype(str).str.strip().replace('nan', '').replace('None', '').nunique())
+                    return (row_count, sum_val, sum_abs, unique_orders)
+                except Exception as e:
+                    print(f"Eroare la calcularea semnăturii DP pentru {file_path}: {e}")
+                    return None
+
             # Caută în folder-ul principal și în eMag 2
             folders_to_check = [folder_emag]
 
@@ -1667,16 +1709,35 @@ class FacturiApp(tk.Tk):
                                     'dp': [], 'dcco': [], 'dccd': [],
                                     'dc': [], 'ded': [], 'dv': [], 'dcs': []
                                 }
+                                dp_signatures_per_period[period] = set()
 
                             # Evită duplicatele - verifică dacă fișierul cu același nume există deja
                             file_basename = os.path.basename(file_path)
                             existing_files = [os.path.basename(p) for p in periods[period][file_type]]
 
-                            if file_basename not in existing_files:
-                                periods[period][file_type].append(file_path)
-                                print(f"  Adaugat {file_type.upper()}: {file} -> perioada {period}")
+                            # Pentru DP aplicăm deduplicare pe baza conținutului; pentru restul rămâne dedup după nume
+                            if file_type == 'dp':
+                                signature = compute_dp_signature(file_path)
+                                if signature is None:
+                                    # Fallback la dedup după nume
+                                    if file_basename not in existing_files:
+                                        periods[period][file_type].append(file_path)
+                                        print(f"  Adaugat {file_type.upper()}: {file} -> perioada {period} (fallback fara semnatura)")
+                                    else:
+                                        print(f"  Duplicat {file_type.upper()} (nume): {file} -> perioada {period} (sarit)")
+                                else:
+                                    if signature in dp_signatures_per_period.get(period, set()):
+                                        print(f"  Duplicat {file_type.upper()} (continut): {file} -> perioada {period} (sarit)")
+                                    else:
+                                        periods[period][file_type].append(file_path)
+                                        dp_signatures_per_period[period].add(signature)
+                                        print(f"  Adaugat {file_type.upper()}: {file} -> perioada {period} | semnatura={signature}")
                             else:
-                                print(f"  Duplicat {file_type.upper()}: {file} -> perioada {period} (sarit)")
+                                if file_basename not in existing_files:
+                                    periods[period][file_type].append(file_path)
+                                    print(f"  Adaugat {file_type.upper()}: {file} -> perioada {period}")
+                                else:
+                                    print(f"  Duplicat {file_type.upper()}: {file} -> perioada {period} (sarit)")
 
             return periods
 
@@ -1786,6 +1847,22 @@ class FacturiApp(tk.Tk):
 
             return 0.0
 
+        def extract_cluster_key(file_path):
+            """Extrage o cheie de cluster din numele fișierului pentru a diferenția seturile din aceeași lună.
+            Format tipic: nortia_<tip>_<MMYYYY>_<REPORTID>_v1.xlsx
+            Cheia corectă de cluster este <REPORTID> (nu <MMYYYY>). Dacă nu o găsim, 'default'."""
+            base = os.path.basename(file_path)
+            # Caută patternul cu luna și apoi un al doilea grup numeric mare
+            m = re.search(r'_\d{6}_(\d{6,})', base)
+            if m:
+                digits = m.group(1)
+                return digits[:7]  # primele 7 sunt suficiente pentru grupare
+            # fallback: încearcă orice secvență numerică lungă
+            m2 = re.search(r'(\d{7,})', base)
+            if m2:
+                return m2.group(1)[:7]
+            return 'default'
+
         # Procesează fișierele
         periods = group_files_by_period()
         results = []
@@ -1800,47 +1877,59 @@ class FacturiApp(tk.Tk):
             print(f"  DED: {len(files['ded'])} fisiere")
             print(f"  DCS: {len(files['dcs'])} fisiere")
 
-            print(f"\n=== Calcul pentru perioada {period} ===")
+            # În loc de o singură agregare pe lună, împarte fișierele pe clustere (câte un "raport" distinct în acea lună)
+            clusters = {}
+            for kind in ['dv', 'dc', 'dcco', 'dccd', 'ded', 'dcs']:
+                for f in files.get(kind, []):
+                    key = extract_cluster_key(f)
+                    if key not in clusters:
+                        clusters[key] = {'dv': [], 'dc': [], 'dcco': [], 'dccd': [], 'ded': [], 'dcs': []}
+                    clusters[key][kind].append(f)
 
-            # Calculează componentele
-            dp_total = calculate_dp_total(files.get('dp', []))
-            dv_total = calculate_dv_total(files.get('dv', []))
+            # Total DP pe întreaga lună (informativ; pentru calcul final vom folosi DP-ul perioadei concrete)
+            dp_total_month = calculate_dp_total(files.get('dp', []))
 
-            dcco_total = sum(calculate_commission_with_tva(f, 'dcco', period) for f in files.get('dcco', []))
-            dccd_total = sum(calculate_commission_with_tva(f, 'dccd', period) for f in files.get('dccd', []))
-            dc_total = sum(calculate_commission_with_tva(f, 'dc', period) for f in files.get('dc', []))
-            ded_total = sum(calculate_commission_with_tva(f, 'ded', period) for f in files.get('ded', []))
-            dcs_total = sum(calculate_commission_with_tva(f, 'dcs', period) for f in files.get('dcs', []))
+            if not clusters:
+                clusters = {'default': {'dv': [], 'dc': [], 'dcco': [], 'dccd': [], 'ded': [], 'dcs': []}}
 
-            # DCS este storno negativ, deci se adună la total (nu se scade)
-            # Formula: DP + DV - (DCCO + DCCD + DC + DED) + DCS
-            comisioane_fara_dcs = dcco_total + dccd_total + dc_total + ded_total
-            total_final = dp_total + dv_total - comisioane_fara_dcs + abs(dcs_total)
+            for key, group in clusters.items():
+                print(f"\n=== Calcul pentru perioada {period} | cluster {key} ===")
+                dv_total = calculate_dv_total(group.get('dv', []))
+                dcco_total = sum(calculate_commission_with_tva(f, 'dcco', period) for f in group.get('dcco', []))
+                dccd_total = sum(calculate_commission_with_tva(f, 'dccd', period) for f in group.get('dccd', []))
+                dc_total = sum(calculate_commission_with_tva(f, 'dc', period) for f in group.get('dc', []))
+                ded_total = sum(calculate_commission_with_tva(f, 'ded', period) for f in group.get('ded', []))
+                dcs_total = sum(calculate_commission_with_tva(f, 'dcs', period) for f in group.get('dcs', []))
 
-            print(f"\n--- Rezumat {period} ---")
-            print(f"DP Total: {dp_total:.2f}")
-            print(f"DV Total: {dv_total:.2f}")
-            print(f"DCCO Total: -{dcco_total:.2f}")
-            print(f"DCCD Total: -{dccd_total:.2f}")
-            print(f"DC Total: -{dc_total:.2f}")
-            print(f"DED Total: -{ded_total:.2f}")
-            print(f"DCS Total: {dcs_total:.2f} (storno - se aduna)")
-            print(f"Comisioane (fara DCS): -{comisioane_fara_dcs:.2f}")
-            print(f"Formula: {dp_total:.2f} + {dv_total:.2f} - {comisioane_fara_dcs:.2f} + {abs(dcs_total):.2f}")
-            print(f"TOTAL FINAL: {total_final:.2f}")
+                comisioane_fara_dcs = dcco_total + dccd_total + dc_total + ded_total
+                # total_final informativ, folosind dp_total_month (în proceseaza_emag vom recalcula cu suma_platita efectivă a perioadei)
+                total_final_info = dp_total_month + dv_total - comisioane_fara_dcs + abs(dcs_total)
 
-            results.append({
-                'period': period,
-                'dp_total': dp_total,
-                'dv_total': dv_total,
-                'dcco_total': dcco_total,
-                'dccd_total': dccd_total,
-                'dc_total': dc_total,
-                'ded_total': ded_total,
-                'dcs_total': dcs_total,
-                'comisioane_total': comisioane_fara_dcs,
-                'total_final': total_final
-            })
+                print(f"\n--- Rezumat {period} | cluster {key} ---")
+                print(f"DP Total (luna - informativ): {dp_total_month:.2f}")
+                print(f"DV Total: {dv_total:.2f}")
+                print(f"DCCO Total: -{dcco_total:.2f}")
+                print(f"DCCD Total: -{dccd_total:.2f}")
+                print(f"DC Total: -{dc_total:.2f}")
+                print(f"DED Total: -{ded_total:.2f}")
+                print(f"DCS Total: {dcs_total:.2f} (storno - se aduna)")
+                print(f"Comisioane (fara DCS): -{comisioane_fara_dcs:.2f}")
+                print(f"Formula (informativ): {dp_total_month:.2f} + {dv_total:.2f} - {comisioane_fara_dcs:.2f} + {abs(dcs_total):.2f}")
+                print(f"TOTAL FINAL (informativ): {total_final_info:.2f}")
+
+                results.append({
+                    'period': period,
+                    'cluster': key,
+                    'dp_total_month': dp_total_month,
+                    'dv_total': dv_total,
+                    'dcco_total': dcco_total,
+                    'dccd_total': dccd_total,
+                    'dc_total': dc_total,
+                    'ded_total': ded_total,
+                    'dcs_total': dcs_total,
+                    'comisioane_total': comisioane_fara_dcs,
+                    'total_final': total_final_info
+                })
 
         return results
 
