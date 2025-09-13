@@ -11,9 +11,9 @@ import threading
 # Încarcă xlrd pentru fișiere .xls (Excel vechi)
 try:
     import xlrd
-    print("xlrd disponibil pentru fișiere .xls")
+    print("xlrd disponibil pentru fisiere .xls")
 except ImportError:
-    print("xlrd nu este disponibil - fișierele .xls nu vor putea fi citite")
+    print("xlrd nu este disponibil - fisierele .xls nu vor putea fi citite")
 
 CONFIG_FILE = "config.txt"
 
@@ -933,27 +933,17 @@ class FacturiApp(tk.Tk):
             print(f"eMag: EXCEPȚIE la citirea easySales: {e}")
             return [], erori
 
-        # Procesează comisioanele
-        comisioane_per_luna, voucher_per_luna, storno_per_luna = self._proceseaza_comisioane_emag(folder_emag, erori)
-        
-        # Salvează în self pentru a fi accesibile în toată clasa
-        self.comisioane_per_luna = comisioane_per_luna
-        self.voucher_per_luna = voucher_per_luna
-        self.storno_per_luna = storno_per_luna
-        
-        print(f"eMag: Comisioane procesate per lună: {comisioane_per_luna}")
-        print(f"eMag: Voucher-uri procesate per lună: {voucher_per_luna}")
-        print(f"eMag: Storno procesate per lună: {storno_per_luna}")
-        
-        # DEBUG: Listează toate fișierele din folder pentru a vedea ce comisioane sunt disponibile
-        print(f"eMag DEBUG: Toate fișierele din folder {folder_emag}:")
-        for f in os.listdir(folder_emag):
-            print(f"  - {f}")
-        
-        if not comisioane_per_luna:
-            print("eMag WARNING: Nu au fost găsite comisioane! Verifică fișierele DC și DED.")
-        else:
-            print(f"eMag INFO: Comisioane găsite pentru lunile: {list(comisioane_per_luna.keys())}")
+        # ====== NOUA LOGICĂ DE CALCUL EMAG ======
+        # Folosește calculatorul îmbunătățit pentru gruparea pe perioade
+        print("\n=== CALCULUL EMAG IMBUNATATIT ===")
+        rezultate_calcule = self._calculeaza_emag_pe_perioade(folder_emag, erori)
+
+        # Salvează rezultatele pentru folosire ulterioară
+        self.rezultate_emag_perioade = rezultate_calcule
+
+        print(f"eMag: Calculat pentru {len(rezultate_calcule)} perioade")
+        for rezultat in rezultate_calcule:
+            print(f"  Perioada {rezultat['period']}: {rezultat['total_final']:.2f} RON")
 
         # *** PARTEA PRINCIPALĂ: PROCESAREA FIȘIERELOR DP CONFORM SPECIFICAȚIILOR ***
         # Colectează toate datele din fișierele DP și procesează perioada de referință
@@ -1310,30 +1300,51 @@ class FacturiApp(tk.Tk):
                 except Exception as e:
                     print(f"eMag: Eroare la citirea XML pentru OP-uri: {e}")
                 
-                print(f"eMag: *** CALCULUL FORMULEI EXACTE eMag pentru {ref_month} ***")
-                # FORMULA EXACTĂ eMag conform specificațiilor:
-                # DP total - DCCO - DCCD - DC - DED + DV + DCS = 6051.51
+                print(f"eMag: *** FOLOSEȘTE CALCULUL ÎMBUNĂTĂȚIT PE PERIOADE pentru {ref_month} ***")
+
+                # Determină perioada pentru căutare în rezultatele noi
+                search_period = ref_month  # ex: "2025-07"
+
+                # Caută în rezultatele calculului pe perioade
+                period_result = None
+                if hasattr(self, 'rezultate_emag_perioade'):
+                    for result in self.rezultate_emag_perioade:
+                        if result['period'] == search_period:
+                            period_result = result
+                            break
+
+                if period_result:
+                    print(f"eMag: ✓ GĂSIT rezultat pentru perioada {search_period}")
+                    dp_total = period_result['dp_total']
+                    voucher_total = period_result['dv_total']
+                    # Comisionul total din noul calcul (fără DCS)
+                    comision_total = period_result['comisioane_total']
+                    # DCS se adună (e storno negativ)
+                    storno_total = abs(period_result['dcs_total'])
+                else:
+                    print(f"eMag: ❌ NU s-a găsit rezultat pentru perioada {search_period}")
+                    print(f"eMag: Perioade disponibile: {[r['period'] for r in self.rezultate_emag_perioade] if hasattr(self, 'rezultate_emag_perioade') else 'N/A'}")
+                    # Fallback la sistemul vechi
+                    dp_total = suma_platita
+                    comision_total = 0
+                    voucher_total = 0
+                    storno_total = 0
                 
-                # IMPORTANT: suma_platita este deja suma DP din fișiere (8475.08)
-                dp_total = suma_platita  # Suma din fișierele DP (coloana Q)
+                # Folosește rezultatul calculat în noul sistem
+                if period_result:
+                    suma_finala_calculata = period_result['total_final']
+                    print(f"eMag: Rezultat din calculul pe perioade: {suma_finala_calculata:.2f} RON")
+                else:
+                    # Fallback: formula veche
+                    suma_finala_calculata = dp_total - (comision_total - storno_total) + voucher_total
+                    print(f"eMag: Rezultat din calculul fallback: {suma_finala_calculata:.2f} RON")
                 
-                # Extrage componentele pentru calculul exact
-                comision_total = self.comisioane_per_luna.get(ref_month, 0.0) if hasattr(self, 'comisioane_per_luna') and self.comisioane_per_luna else 0.0  # DC + DCCD + DCCO + DED (cu TVA)
-                voucher_total = self.voucher_per_luna.get(ref_month, 0.0) if hasattr(self, 'voucher_per_luna') and self.voucher_per_luna else 0.0      # DV (fără TVA) - se ADUNĂ
-                storno_total = self.storno_per_luna.get(ref_month, 0.0) if hasattr(self, 'storno_per_luna') and self.storno_per_luna else 0.0        # DCS (cu TVA) - se ADUNĂ
-                
-                # Formula EXACTĂ eMag: DP - (DC + DCCD + DCCO + DED - DCS) + DV
-                # Notă: storno_total (DCS) reduce comisionul, deci îl scădem din comision_total
-                suma_finala_calculata = dp_total - (comision_total - storno_total) + voucher_total
-                
-                print(f"eMag: FORMULA EXACTĂ eMag pentru {ref_month}")
-                print(f"eMag: DP total (din fișiere): {dp_total:.2f} RON")
-                print(f"eMag: Comisioane BRUTE (DC+DCCD+DCCO+DED): -{comision_total:.2f} RON")
-                print(f"eMag: DCS (storno): -{storno_total:.2f} RON (REDUCE comisionul)")
-                print(f"eMag: Comision NET după storno: -{comision_total - storno_total:.2f} RON")
-                print(f"eMag: DV (voucher): +{voucher_total:.2f} RON (se ADUNĂ, fără TVA)")
-                print(f"eMag: FORMULA: {dp_total:.2f} - ({comision_total:.2f} - {storno_total:.2f}) + {voucher_total:.2f}")
-                print(f"eMag: REZULTAT CALCULAT: {suma_finala_calculata:.2f} RON")
+                print(f"eMag: === DETALII CALCUL pentru {ref_month} ===")
+                print(f"eMag: DP total: {dp_total:.2f} RON")
+                print(f"eMag: DV total (voucher): +{voucher_total:.2f} RON")
+                print(f"eMag: Comisioane (fără DCS): -{comision_total:.2f} RON")
+                print(f"eMag: DCS (storno - se adună): +{storno_total:.2f} RON")
+                print(f"eMag: REZULTAT FINAL: {suma_finala_calculata:.2f} RON")
                 
                 if suma_din_xml:
                     print(f"eMag: Suma din XML Netopia: {suma_din_xml:.2f} RON")
@@ -1560,7 +1571,279 @@ class FacturiApp(tk.Tk):
 
         print(f"eMag: Procesare completă. Total perioade: {len(rezultate_emag)}, Total erori: {len(erori)}")
         return rezultate_emag, erori
-    
+
+    def _calculeaza_emag_pe_perioade(self, folder_emag, erori):
+        """Calculează eMag pe perioade folosind formula: DP + DV - (DCCO + DCCD + DC + DED + DCS)"""
+
+        tva_rates = {
+            "2025-07": 1.19,  # TVA 19% pentru iulie
+            "2025-08": 1.21,  # TVA 21% pentru august și ulterior
+            "2025-09": 1.21,
+        }
+
+        def get_file_period(file_path, file_type):
+            """Determină perioada unui fișier eMag bazat pe tipul său"""
+            try:
+                if file_type == 'dp':
+                    # Pentru DP, citește Reference period start/end
+                    df = pd.read_excel(file_path, dtype=str)
+                    if 'Reference period start' in df.columns and len(df) > 0:
+                        period_start = pd.to_datetime(df['Reference period start'].iloc[0])
+                        return f"{period_start.year}-{period_start.month:02d}"
+                else:
+                    # Pentru DC, DCCO, DV, etc - citește coloana Luna
+                    df = pd.read_excel(file_path, dtype=str)
+                    if 'Luna' in df.columns and len(df) > 0:
+                        luna_text = str(df['Luna'].iloc[0]).strip()
+                        # Parsează "iulie 2025" -> "2025-07"
+                        month_map = {
+                            'ianuarie': '01', 'februarie': '02', 'martie': '03',
+                            'aprilie': '04', 'mai': '05', 'iunie': '06',
+                            'iulie': '07', 'august': '08', 'septembrie': '09',
+                            'octombrie': '10', 'noiembrie': '11', 'decembrie': '12'
+                        }
+                        for month_name, month_num in month_map.items():
+                            if month_name in luna_text.lower():
+                                year = re.search(r'\d{4}', luna_text)
+                                if year:
+                                    return f"{year.group()}-{month_num}"
+            except Exception as e:
+                print(f"Eroare la determinarea perioadei pentru {file_path}: {e}")
+
+            # Fallback: încearcă să extragă din numele fișierului
+            match = re.search(r'(\d{2})(\d{4})', os.path.basename(file_path))
+            if match:
+                month = match.group(1)
+                year = match.group(2)
+                return f"{year}-{month}"
+            return None
+
+        def group_files_by_period():
+            """Grupează fișierele eMag pe perioade de raportare"""
+            periods = {}
+
+            # Caută în folder-ul principal și în eMag 2
+            folders_to_check = [folder_emag]
+
+            # Verifică dacă există folder-ul eMag 2
+            folder_emag2 = os.path.join(os.path.dirname(folder_emag), "eMag 2")
+            if os.path.exists(folder_emag2):
+                folders_to_check.append(folder_emag2)
+                print(f"Gasit si folder-ul eMag 2: {folder_emag2}")
+
+            for current_folder in folders_to_check:
+                print(f"Procesez folder-ul: {current_folder}")
+                if not os.path.exists(current_folder):
+                    continue
+
+                for file in os.listdir(current_folder):
+                    if not file.endswith('.xlsx'):
+                        continue
+
+                    file_path = os.path.join(current_folder, file)
+                    file_type = None
+
+                    # Determină tipul fișierului
+                    if file.startswith('nortia_dp_'):
+                        file_type = 'dp'
+                    elif file.startswith('nortia_dcco_'):
+                        file_type = 'dcco'
+                    elif file.startswith('nortia_dccd_'):
+                        file_type = 'dccd'
+                    elif file.startswith('nortia_dc_') and not file.startswith('nortia_dccd_') and not file.startswith('nortia_dcco_'):
+                        file_type = 'dc'
+                    elif file.startswith('nortia_ded_'):
+                        file_type = 'ded'
+                    elif file.startswith('nortia_dv_'):
+                        file_type = 'dv'
+                    elif file.startswith('nortia_dcs_'):
+                        file_type = 'dcs'
+
+                    if file_type:
+                        period = get_file_period(file_path, file_type)
+                        if period:
+                            if period not in periods:
+                                periods[period] = {
+                                    'dp': [], 'dcco': [], 'dccd': [],
+                                    'dc': [], 'ded': [], 'dv': [], 'dcs': []
+                                }
+
+                            # Evită duplicatele - verifică dacă fișierul cu același nume există deja
+                            file_basename = os.path.basename(file_path)
+                            existing_files = [os.path.basename(p) for p in periods[period][file_type]]
+
+                            if file_basename not in existing_files:
+                                periods[period][file_type].append(file_path)
+                                print(f"  Adaugat {file_type.upper()}: {file} -> perioada {period}")
+                            else:
+                                print(f"  Duplicat {file_type.upper()}: {file} -> perioada {period} (sarit)")
+
+            return periods
+
+        def calculate_dp_total(dp_files):
+            """Calculează totalul din fișierele DP"""
+            total = 0.0
+            for file_path in dp_files:
+                try:
+                    df = pd.read_excel(file_path, dtype=str)
+                    if 'Fraction value' in df.columns:
+                        values = pd.to_numeric(df['Fraction value'], errors='coerce')
+                        total += values.sum()
+                        print(f"DP {os.path.basename(file_path)}: {values.sum():.2f}")
+                except Exception as e:
+                    print(f"Eroare la procesarea DP {file_path}: {e}")
+            return total
+
+        def calculate_dv_total(dv_files):
+            """Calculează totalul voucher-elor din fișierele DV"""
+            total = 0.0
+            for file_path in dv_files:
+                try:
+                    df = pd.read_excel(file_path, dtype=str)
+                    # Verifică dacă avem coloana X prin header
+                    if 'Valoare vouchere' in df.columns:
+                        values = pd.to_numeric(df['Valoare vouchere'], errors='coerce')
+                        file_total = values.sum()
+                        print(f"DV {os.path.basename(file_path)}: {file_total:.2f} (prin header)")
+                    elif df.shape[1] > 23:
+                        # Fallback: citește prin index - ia TOATE rândurile de date (începând cu rândul 2)
+                        values = pd.to_numeric(df.iloc[1:, 23], errors='coerce')
+                        file_total = values.sum()
+                        print(f"DV {os.path.basename(file_path)}: {file_total:.2f} (prin index)")
+                        print(f"  Valori individuale: {values.dropna().tolist()}")
+                    else:
+                        file_total = 0.0
+                        print(f"DV {os.path.basename(file_path)}: 0.00 (nu am gasit coloana)")
+
+                    total += file_total
+                except Exception as e:
+                    print(f"Eroare la procesarea DV {file_path}: {e}")
+            return total
+
+        def calculate_commission_with_tva(file_path, file_type, period):
+            """Calculează comisionul cu TVA pentru un fișier"""
+            try:
+                tva_rate = tva_rates.get(period, 1.21)
+
+                if file_type == 'dc':
+                    df = pd.read_excel(file_path, header=None)
+                    if df.shape[1] > 19 and df.shape[0] > 1:
+                        value = pd.to_numeric(df.iloc[1, 19], errors='coerce')
+                        if not pd.isna(value):
+                            total = abs(value) * tva_rate
+                            print(f"DC {os.path.basename(file_path)}: {abs(value):.2f} * {tva_rate} = {total:.2f}")
+                            return total
+
+                elif file_type == 'dcco':
+                    df = pd.read_excel(file_path, header=None)
+                    if df.shape[1] > 19 and df.shape[0] > 1:
+                        value = pd.to_numeric(df.iloc[1, 19], errors='coerce')
+                        if not pd.isna(value):
+                            total = abs(value) * tva_rate
+                            print(f"DCCO {os.path.basename(file_path)}: {abs(value):.2f} * {tva_rate} = {total:.2f}")
+                            return total
+
+                elif file_type == 'dccd':
+                    df = pd.read_excel(file_path, header=None)
+                    if df.shape[1] > 19 and df.shape[0] > 1:
+                        value = pd.to_numeric(df.iloc[1, 19], errors='coerce')
+                        if not pd.isna(value):
+                            total = abs(value) * tva_rate
+                            print(f"DCCD {os.path.basename(file_path)}: {abs(value):.2f} * {tva_rate} = {total:.2f}")
+                            return total
+
+                elif file_type == 'ded':
+                    df = pd.read_excel(file_path, header=None)
+                    if df.shape[1] > 12 and df.shape[0] > 1:
+                        value = pd.to_numeric(df.iloc[1, 12], errors='coerce')
+                        if not pd.isna(value):
+                            total = abs(value) * tva_rate
+                            print(f"DED {os.path.basename(file_path)}: {abs(value):.2f} * {tva_rate} = {total:.2f}")
+                            return total
+
+                elif file_type == 'dcs':
+                    df = pd.read_excel(file_path, dtype=str)
+                    if 'Comision Net' in df.columns:
+                        # Pentru DCS, folosește doar primul rând de date (nu toate)
+                        # conform specificațiilor utilizatorului
+                        values = pd.to_numeric(df['Comision Net'], errors='coerce')
+                        if len(values) > 0:
+                            first_value = values.iloc[0] if not pd.isna(values.iloc[0]) else 0
+                            total = abs(first_value) * tva_rate
+                            print(f"DCS {os.path.basename(file_path)}: {first_value:.2f} * {tva_rate} = -{total:.2f} (storno, primul rand)")
+                            return -total
+                    elif df.shape[1] > 3:
+                        # Fallback: prima valoare din coloana D
+                        if df.shape[0] > 1:
+                            first_value = pd.to_numeric(df.iloc[1, 3], errors='coerce')
+                            if not pd.isna(first_value):
+                                total = abs(first_value) * tva_rate
+                                print(f"DCS {os.path.basename(file_path)}: {first_value:.2f} * {tva_rate} = -{total:.2f} (storno, primul rand)")
+                                return -total
+
+            except Exception as e:
+                print(f"Eroare la procesarea {file_type} {file_path}: {e}")
+
+            return 0.0
+
+        # Procesează fișierele
+        periods = group_files_by_period()
+        results = []
+
+        for period, files in sorted(periods.items()):
+            print(f"\nProcesez perioada {period}:")
+            print(f"  DP: {len(files['dp'])} fisiere")
+            print(f"  DV: {len(files['dv'])} fisiere")
+            print(f"  DC: {len(files['dc'])} fisiere")
+            print(f"  DCCO: {len(files['dcco'])} fisiere")
+            print(f"  DCCD: {len(files['dccd'])} fisiere")
+            print(f"  DED: {len(files['ded'])} fisiere")
+            print(f"  DCS: {len(files['dcs'])} fisiere")
+
+            print(f"\n=== Calcul pentru perioada {period} ===")
+
+            # Calculează componentele
+            dp_total = calculate_dp_total(files.get('dp', []))
+            dv_total = calculate_dv_total(files.get('dv', []))
+
+            dcco_total = sum(calculate_commission_with_tva(f, 'dcco', period) for f in files.get('dcco', []))
+            dccd_total = sum(calculate_commission_with_tva(f, 'dccd', period) for f in files.get('dccd', []))
+            dc_total = sum(calculate_commission_with_tva(f, 'dc', period) for f in files.get('dc', []))
+            ded_total = sum(calculate_commission_with_tva(f, 'ded', period) for f in files.get('ded', []))
+            dcs_total = sum(calculate_commission_with_tva(f, 'dcs', period) for f in files.get('dcs', []))
+
+            # DCS este storno negativ, deci se adună la total (nu se scade)
+            # Formula: DP + DV - (DCCO + DCCD + DC + DED) + DCS
+            comisioane_fara_dcs = dcco_total + dccd_total + dc_total + ded_total
+            total_final = dp_total + dv_total - comisioane_fara_dcs + abs(dcs_total)
+
+            print(f"\n--- Rezumat {period} ---")
+            print(f"DP Total: {dp_total:.2f}")
+            print(f"DV Total: {dv_total:.2f}")
+            print(f"DCCO Total: -{dcco_total:.2f}")
+            print(f"DCCD Total: -{dccd_total:.2f}")
+            print(f"DC Total: -{dc_total:.2f}")
+            print(f"DED Total: -{ded_total:.2f}")
+            print(f"DCS Total: {dcs_total:.2f} (storno - se aduna)")
+            print(f"Comisioane (fara DCS): -{comisioane_fara_dcs:.2f}")
+            print(f"Formula: {dp_total:.2f} + {dv_total:.2f} - {comisioane_fara_dcs:.2f} + {abs(dcs_total):.2f}")
+            print(f"TOTAL FINAL: {total_final:.2f}")
+
+            results.append({
+                'period': period,
+                'dp_total': dp_total,
+                'dv_total': dv_total,
+                'dcco_total': dcco_total,
+                'dccd_total': dccd_total,
+                'dc_total': dc_total,
+                'ded_total': ded_total,
+                'dcs_total': dcs_total,
+                'comisioane_total': comisioane_fara_dcs,
+                'total_final': total_final
+            })
+
+        return results
+
     def _proceseaza_comisioane_emag(self, folder_emag, erori):
         """Procesează fișierele de comision eMag și returnează un dicționar luna -> comision cu TVA"""
         comisioane_per_luna = {}
