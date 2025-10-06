@@ -318,6 +318,11 @@ class FacturiApp(tk.Tk):
             rezultate_sameday, erori_sameday = self.proceseaza_borderouri(self.folder_sameday.get(), self.path_gomag.get(), self.path_extras.get(), "Sameday")
             self.erori.extend(erori_sameday)
 
+            # CHECK FINAL: Caută în Oblio pentru AWB-uri rămase cu erori
+            self.progress_var.set(40)
+            self.progress_text.set("Verificare finală în Oblio...")
+            self._cautare_finala_oblio(rezultate_gls, rezultate_sameday)
+
             self.progress_var.set(50)
             self.progress_text.set("Procesează Netopia...")
             
@@ -430,6 +435,168 @@ class FacturiApp(tk.Tk):
         except Exception as e:
             print(f"Eroare la încărcarea căilor: {e}")
 
+    def _cautare_finala_oblio(self, rezultate_gls, rezultate_sameday):
+        """
+        Căutare FINALĂ în Oblio pentru AWB-urile rămase cu erori.
+        Se execută după procesarea tuturor borderourilor GLS și Sameday.
+        Caută facturi care NU au fost deja folosite.
+        """
+        print("\n" + "="*80)
+        print("CĂUTARE FINALĂ ÎN OBLIO PENTRU AWB-URI CU ERORI")
+        print("="*80)
+
+        path_oblio = self.path_oblio.get()
+        if not path_oblio or not os.path.exists(path_oblio):
+            print("Oblio: Fișier nu există, sărim căutarea finală")
+            return
+
+        # Colectează toate facturile deja folosite
+        facturi_folosite = set()
+        for rezultate in [rezultate_gls, rezultate_sameday]:
+            for rez in rezultate:
+                potrivite = rez.get('potrivite', pd.DataFrame())
+                for idx, row in potrivite.iterrows():
+                    numar_factura = row.get('numar factura', None)
+                    if numar_factura and not pd.isna(numar_factura) and numar_factura != 0:
+                        try:
+                            facturi_folosite.add(str(int(float(numar_factura))))
+                        except (ValueError, TypeError):
+                            facturi_folosite.add(str(numar_factura))
+
+        print(f"Facturi deja folosite: {len(facturi_folosite)}")
+
+        # Încarcă Oblio
+        try:
+            # Pentru fișiere .xls (Excel vechi), folosește engine='xlrd'
+            # Dacă fișierul este corupt, încearcă cu calamine (pentru fișiere Excel vechi corupte)
+            try:
+                if path_oblio.endswith('.xls'):
+                    # Încearcă cu xlrd mai întâi
+                    try:
+                        oblio_df = pd.read_excel(path_oblio, header=4, engine='xlrd')
+                        print("Oblio: Fișier .xls citit cu xlrd")
+                    except:
+                        # Dacă xlrd eșuează, încearcă cu calamine (python-calamine)
+                        try:
+                            oblio_df = pd.read_excel(path_oblio, header=4, engine='calamine')
+                            print("Oblio: Fișier .xls citit cu calamine")
+                        except:
+                            # Ultimate fallback - convertește cu win32com dacă e pe Windows
+                            import tempfile
+                            temp_xlsx = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False).name
+
+                            # Încearcă conversia cu win32com
+                            try:
+                                import win32com.client
+                                excel = win32com.client.Dispatch("Excel.Application")
+                                excel.Visible = False
+                                wb = excel.Workbooks.Open(os.path.abspath(path_oblio))
+                                wb.SaveAs(temp_xlsx, FileFormat=51)  # 51 = xlsx
+                                wb.Close()
+                                excel.Quit()
+
+                                oblio_df = pd.read_excel(temp_xlsx, header=4)
+                                os.unlink(temp_xlsx)
+                                print("Oblio: Fișier .xls convertit cu Excel COM și citit")
+                            except:
+                                raise Exception("Nu s-a putut citi fișierul Oblio corupt")
+                else:
+                    oblio_df = pd.read_excel(path_oblio, header=4)
+                    print("Oblio: Fișier .xlsx citit cu openpyxl")
+            except Exception as e_engine:
+                print(f"Oblio: Eroare cu engine-ul specific: {e_engine}")
+                raise
+
+            if 'Total valoare' not in oblio_df.columns or 'Factura' not in oblio_df.columns:
+                print("Oblio: Coloane lipsă, sărim căutarea finală")
+                return
+
+            # Pregătește datele Oblio
+            oblio_df['Total_valoare_numeric'] = pd.to_numeric(oblio_df['Total valoare'], errors='coerce')
+            oblio_df['Factura_clean'] = oblio_df['Factura'].astype(str).str.strip()
+            oblio_valide = oblio_df.dropna(subset=['Total_valoare_numeric'])
+            oblio_valide = oblio_valide[oblio_valide['Factura_clean'] != 'nan']
+            oblio_valide = oblio_valide[oblio_valide['Factura_clean'] != '']
+
+            print(f"Oblio: {len(oblio_valide)} facturi valide în total")
+
+        except Exception as e:
+            print(f"Oblio: Eroare la citire: {e}")
+            return
+
+        # Caută AWB-uri cu erori și încearcă să le rezolvi
+        awb_rezolvate = 0
+        for rezultate, tip in [(rezultate_gls, "GLS"), (rezultate_sameday, "Sameday")]:
+            for rez in rezultate:
+                potrivite = rez.get('potrivite', pd.DataFrame())
+                borderou_name = rez.get('borderou', 'N/A')
+
+                # Găsește AWB-uri fără factură
+                awb_fara_factura_mask = (potrivite['numar factura'].isna()) | (potrivite['numar factura'] == 0)
+                awb_fara_factura_indices = potrivite[awb_fara_factura_mask].index
+
+                if len(awb_fara_factura_indices) == 0:
+                    continue
+
+                print(f"\n{tip} - {borderou_name}: {len(awb_fara_factura_indices)} AWB-uri fără factură")
+
+                for idx in awb_fara_factura_indices:
+                    row = potrivite.loc[idx]
+                    awb = row.get('AWB_normalizat', 'N/A')
+                    suma = row.get('Sumă ramburs') or row.get('Suma ramburs')
+
+                    if not suma:
+                        print(f"  ✗ AWB {awb} - SĂRIT (fără sumă)")
+                        continue
+
+                    try:
+                        suma_float = float(suma)
+                    except (ValueError, TypeError):
+                        print(f"  ✗ AWB {awb} - SĂRIT (suma '{suma}' nu e numerică)")
+                        continue
+
+                    print(f"  ? Caută AWB {awb} cu suma {suma_float}...")
+
+                    # Caută în Oblio facturi care SE POTRIVESC după sumă și NU sunt folosite
+                    potriviri = oblio_valide[abs(oblio_valide['Total_valoare_numeric'] - suma_float) < 0.01]
+
+                    print(f"    → {len(potriviri)} potriviri după sumă în Oblio")
+
+                    factura_gasita = False
+                    for _, match_row in potriviri.iterrows():
+                        factura_completa = match_row['Factura_clean']
+                        suma_oblio = match_row['Total_valoare_numeric']
+
+                        # Extrage numărul facturii
+                        import re
+                        match_numeric = re.search(r'\d+', factura_completa)
+                        if not match_numeric:
+                            print(f"    ✗ Factură '{factura_completa}' - nu se poate extrage număr")
+                            continue
+
+                        numar_factura = match_numeric.group()
+
+                        # Verifică dacă factura NU a fost folosită
+                        if numar_factura in facturi_folosite:
+                            print(f"    ✗ Factură {numar_factura} (suma {suma_oblio}) - DEJA FOLOSITĂ")
+                        else:
+                            # GĂSIT! Asociază factura cu AWB-ul
+                            potrivite.at[idx, 'numar factura'] = numar_factura
+                            facturi_folosite.add(numar_factura)
+                            awb_rezolvate += 1
+                            print(f"  ✓ AWB {awb} - REZOLVAT cu Factură {numar_factura} (suma {suma})")
+                            factura_gasita = True
+                            break
+
+                    if not factura_gasita and len(potriviri) == 0:
+                        print(f"  ✗ AWB {awb} - NU GĂSIT în Oblio (suma {suma_float} nu există)")
+                    elif not factura_gasita:
+                        print(f"  ✗ AWB {awb} - NU REZOLVAT (toate facturile cu suma {suma_float} sunt deja folosite)")
+
+        print(f"\n{'='*80}")
+        print(f"CĂUTARE FINALĂ COMPLETĂ: {awb_rezolvate} AWB-uri rezolvate")
+        print(f"{'='*80}\n")
+
     def _cauta_in_oblio(self, suma_cautata, nume_client, data_livrare, tip_curier, awb):
         """
         Caută factură în fișierul Oblio pe baza sumei
@@ -448,18 +615,41 @@ class FacturiApp(tk.Tk):
             
         try:
             # Header pe rândul 5 (index 4), datele încep de pe rândul 6
-            # Pentru fișiere .xls (Excel vechi), folosește engine='xlrd'
+            # Pentru fișiere .xls (Excel vechi), folosește engine='xlrd' sau convertește cu Excel COM
             try:
                 if path_oblio.endswith('.xls'):
-                    oblio_df = pd.read_excel(path_oblio, header=4, engine='xlrd')
-                    print(f"{tip_curier} Oblio: Fișier .xls citit cu xlrd")
+                    # Încearcă cu xlrd mai întâi
+                    try:
+                        oblio_df = pd.read_excel(path_oblio, header=4, engine='xlrd')
+                        print(f"{tip_curier} Oblio: Fișier .xls citit cu xlrd")
+                    except:
+                        # Dacă xlrd eșuează, încearcă cu calamine (python-calamine)
+                        try:
+                            oblio_df = pd.read_excel(path_oblio, header=4, engine='calamine')
+                            print(f"{tip_curier} Oblio: Fișier .xls citit cu calamine")
+                        except:
+                            # Ultimate fallback - convertește cu win32com dacă e pe Windows
+                            import tempfile
+                            temp_xlsx = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False).name
+
+                            # Încearcă conversia cu win32com
+                            import win32com.client
+                            excel = win32com.client.Dispatch("Excel.Application")
+                            excel.Visible = False
+                            wb = excel.Workbooks.Open(os.path.abspath(path_oblio))
+                            wb.SaveAs(temp_xlsx, FileFormat=51)  # 51 = xlsx
+                            wb.Close()
+                            excel.Quit()
+
+                            oblio_df = pd.read_excel(temp_xlsx, header=4)
+                            os.unlink(temp_xlsx)
+                            print(f"{tip_curier} Oblio: Fișier .xls convertit cu Excel COM și citit")
                 else:
                     oblio_df = pd.read_excel(path_oblio, header=4)
                     print(f"{tip_curier} Oblio: Fișier .xlsx citit cu openpyxl")
             except Exception as e_engine:
                 print(f"{tip_curier} Oblio: Eroare cu engine-ul specific: {e_engine}")
-                # Fallback - încearcă fără engine specific
-                oblio_df = pd.read_excel(path_oblio, header=4)
+                return None
                 
             print(f"🔍 DEBUG COMPLET pentru fișierul Oblio:")
             print(f"   Fișier: {path_oblio}")
@@ -780,7 +970,7 @@ class FacturiApp(tk.Tk):
     def proceseaza_netopia(self, folder_netopia, path_gomag):
         erori = []
         tranzactii_netopia = []
-        
+
         if not folder_netopia or not os.path.exists(folder_netopia):
             erori.append(f"Folderul Netopia nu există sau nu este valid: {folder_netopia}")
             return [], erori
@@ -803,23 +993,46 @@ class FacturiApp(tk.Tk):
                 netopia_df.columns = netopia_df.columns.str.strip().str.replace('"', '').str.replace("'", "")
                 netopia_df = netopia_df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
 
-                # Caută coloana Procesat
+                # Caută coloanele necesare
                 col_procesat = None
+                col_creditat = None
                 for col in netopia_df.columns:
                     if col.lower() == "procesat":
                         col_procesat = col
-                        break
+                    elif col.lower() == "creditat":
+                        col_creditat = col
+
                 if not col_procesat:
                     erori.append(f"Fișierul Netopia {file} nu conține coloana 'Procesat'. Coloane găsite: {list(netopia_df.columns)}")
                     continue
+                if not col_creditat:
+                    erori.append(f"Fișierul Netopia {file} nu conține coloana 'Creditat'. Coloane găsite: {list(netopia_df.columns)}")
+                    continue
 
-                # Extrage doar tranzacțiile procesate (pozitive)
+                # Convertește valorile numerice
                 netopia_df[col_procesat] = pd.to_numeric(netopia_df[col_procesat].str.replace(',', '.'), errors='coerce')
-                tranzactii = netopia_df[netopia_df[col_procesat] > 0].copy()
+                netopia_df[col_creditat] = pd.to_numeric(netopia_df[col_creditat].str.replace(',', '.'), errors='coerce')
 
-                # Extrage numărul de comandă din descriere
-                tranzactii['numar_comanda_extras'] = tranzactii['Descriere'].str.extract(r'Comanda nr\. (\d+)')
-                tranzactii['numar_comanda_extras'] = tranzactii['numar_comanda_extras'].astype(str).str.strip()
+                # Umple valorile NaN cu 0
+                netopia_df[col_procesat] = netopia_df[col_procesat].fillna(0)
+                netopia_df[col_creditat] = netopia_df[col_creditat].fillna(0)
+
+                # Extrage numărul de comandă din descriere pentru toate rândurile
+                netopia_df['numar_comanda_extras'] = netopia_df['Descriere'].str.extract(r'Comanda nr\. (\d+)')
+                netopia_df['numar_comanda_extras'] = netopia_df['numar_comanda_extras'].astype(str).str.strip()
+
+                # Grupează pe comandă și calculează suma netă (procesat + creditat, unde creditat poate fi negativ pentru refunduri)
+                comenzi_grupate = netopia_df.groupby('numar_comanda_extras').agg({
+                    col_procesat: 'sum',
+                    col_creditat: 'sum',
+                    'Descriere': 'first'  # păstrează prima descriere
+                }).reset_index()
+
+                # Calculează suma netă
+                comenzi_grupate['suma_neta'] = comenzi_grupate[col_procesat] + comenzi_grupate[col_creditat]
+
+                # Filtrează doar comenzile cu suma netă pozitivă (nu avem refund total)
+                tranzactii = comenzi_grupate[comenzi_grupate['suma_neta'] > 0].copy()
 
                 # Asociază cu Gomag după număr comandă
                 merge = tranzactii.merge(
@@ -836,7 +1049,7 @@ class FacturiApp(tk.Tk):
                         'numar_op': '',  # va fi completat la export
                         'curier': 'Netopia',
                         'numar_factura': row.get('numar factura', ''),
-                        'suma': row[col_procesat],
+                        'suma': row['suma_neta'],
                         'numar_comanda': row['numar_comanda_extras'],
                         'descriere': row.get('Descriere', ''),
                     })
@@ -2333,6 +2546,13 @@ class FacturiApp(tk.Tk):
                 facturi_ok = potrivite[~potrivite['numar factura'].isna() & (potrivite['numar factura'] != 0)]
                 facturi_ko = potrivite[potrivite['numar factura'].isna() | (potrivite['numar factura'] == 0)]
 
+                # --- SORTARE CRONOLOGICĂ DUPĂ NUMĂRUL FACTURII ---
+                # Convertește numărul facturii la numeric pentru sortare corectă
+                facturi_ok = facturi_ok.copy()
+                facturi_ok['_numar_factura_numeric'] = pd.to_numeric(facturi_ok['numar factura'], errors='coerce')
+                facturi_ok = facturi_ok.sort_values(by='_numar_factura_numeric', ascending=True)
+                facturi_ok = facturi_ok.drop(columns=['_numar_factura_numeric'])
+
                 erori_exist = not facturi_ko.empty
                 erori_text = "DA" if erori_exist else "NU"
 
@@ -2457,13 +2677,14 @@ class FacturiApp(tk.Tk):
                         raise ValueError("No matching batch found")
                     
                     df_batch['Procesat'] = pd.to_numeric(df_batch['Procesat'].str.replace(',', '.'), errors='coerce').fillna(0)
+                    df_batch['Creditat'] = pd.to_numeric(df_batch['Creditat'].str.replace(',', '.'), errors='coerce').fillna(0)
                     df_batch['Comision'] = pd.to_numeric(df_batch['Comision'].str.replace(',', '.'), errors='coerce').fillna(0)
                     df_batch['TVA'] = pd.to_numeric(df_batch['TVA'].str.replace(',', '.'), errors='coerce').fillna(0)
-                    
-                    # Calculează totalul facturilor doar pentru valorile pozitive din Procesat
-                    total_procesat = df_batch[df_batch['Procesat'] > 0]['Procesat'].sum()
-                    # Calculează comisioanele din valorile negative (cu abs pentru a avea valori pozitive)
-                    total_comision = abs(df_batch[df_batch['Procesat'] <= 0]['Procesat'].sum()) + abs(df_batch['Comision'].sum()) + abs(df_batch['TVA'].sum())
+
+                    # Calculează totalul facturilor: suma din Procesat + suma din Creditat (care include refund-urile cu minus)
+                    total_procesat = df_batch['Procesat'].sum() + df_batch['Creditat'].sum()
+                    # Calculează comisioanele din coloanele Comision și TVA
+                    total_comision = abs(df_batch['Comision'].sum()) + abs(df_batch['TVA'].sum())
                     total_net = total_procesat - total_comision
                     
                 except Exception as e:
@@ -2486,8 +2707,12 @@ class FacturiApp(tk.Tk):
                         op_gasit = op
                         data_op = data
                         break
+
+                # --- SORTARE CRONOLOGICĂ DUPĂ NUMĂRUL FACTURII ---
+                tranzactii_sorted = sorted(tranzactii, key=lambda t: float(t['numar_factura']) if t['numar_factura'] and str(t['numar_factura']).strip() and str(t['numar_factura']) != 'nan' else float('inf'))
+
                 first_row = True
-                for tranz in tranzactii:
+                for tranz in tranzactii_sorted:
                     # Convertește numărul facturii în întreg pentru a evita apostroful în Excel
                     numar_factura = tranz['numar_factura']
                     if numar_factura and str(numar_factura).strip() and str(numar_factura) != 'nan':
@@ -2554,10 +2779,23 @@ class FacturiApp(tk.Tk):
                             op_gasit = op
                             data_op = data
                             break
-                
+
+                # --- SORTARE CRONOLOGICĂ DUPĂ NUMĂRUL FACTURII ---
+                # Sortează comenzile după numărul facturii (ignoră ANULATA/CANCELED)
+                def extract_factura_numeric(comanda):
+                    nf = comanda.get('numar_factura', '')
+                    if nf and str(nf).strip() and str(nf) not in ['nan', 'ANULATA', 'CANCELED', 'Canceled']:
+                        try:
+                            return float(nf)
+                        except (ValueError, TypeError):
+                            return float('inf')
+                    return float('inf')
+
+                comenzi_sorted = sorted(comenzi, key=extract_factura_numeric)
+
                 # Scrie fiecare factură
                 first_row = True
-                for comanda in comenzi:
+                for comanda in comenzi_sorted:
                     # Convertește numărul facturii în întreg pentru a evita apostroful în Excel
                     numar_factura = comanda['numar_factura']
                     if numar_factura and str(numar_factura).strip() and str(numar_factura) != 'nan':

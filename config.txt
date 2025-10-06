@@ -5,5 +5,5 @@ path_extras=C:/Development/Python/Ultimate_FACTURI/8_August/20250907_161653_extr
 folder_netopia=C:/Development/Python/Ultimate_FACTURI/8_August/Netopia
 folder_emag=C:/Development/Python/Ultimate_FACTURI/8_August/eMag
 path_easysales=C:/Development/Python/Ultimate_FACTURI/8_August/Comenzi easySales.xlsx
-path_oblio=C:/Development/Python/Ultimate_FACTURI/8_August/Facturi Oblio.xls
+path_oblio=C:/Development/Python/Ultimate_FACTURI/8_August/Facturi Oblio.xlsx
 path_export=C:/Development/Python/Ultimate_FACTURI/8_August/opuri_export.xlsx
