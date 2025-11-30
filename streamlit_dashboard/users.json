@@ -1,11 +1,11 @@
 {
   "admin": {
-    "password": "240be518fabd2724ddb6f04eeb9d5a49280b331e7afa21098e1a93dc2e6b4f16",
+    "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
     "role": "admin",
     "name": "Administrator"
   },
   "user": {
-    "password": "0a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90",
+    "password": "e606e38b0d8c19b24cf0ee3808183162ea7cd63ff7912dbb22b5e803286b4446",
     "role": "user",
     "name": "Utilizator"
   }
