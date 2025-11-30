@@ -3519,10 +3519,147 @@ class FacturiApp(tk.Tk):
             print(f"Eroare la determinarea TVA: {e}")
             return 1.19, "19%", "2025-07"  # Fallback la 19%
 
+def parse_mt940_file(file_path):
+    """
+    Parsează un fișier MT940 (Banca Transilvania) și extrage tranzacțiile credit.
+    Returnează lista de tuple: (op, suma, data, batchid, details)
+    """
+    referinte = []
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Verifică dacă este format MT940 (conține tag-uri specifice)
+        if ':20:' not in content or ':61:' not in content:
+            return []
+
+        # Extrage toate blocurile de tranzacții (:61: + :86:)
+        # Pattern pentru :61: - formatul: YYMMDDMMDD[C/D]suma,decimaleNTRF...//referinta
+        lines = content.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+
+            if line.startswith(':61:'):
+                # Parsează linia :61:
+                # Format: :61:2511201120C529,38NTRFNONREF//044ZEXA2532403P0
+                statement_line = line[4:]  # Elimină ':61:'
+
+                # Extrage data (primele 6 caractere: YYMMDD)
+                if len(statement_line) >= 6:
+                    date_str = statement_line[:6]
+                    try:
+                        # Convertește YYMMDD în format citibil
+                        year = 2000 + int(date_str[0:2])
+                        month = int(date_str[2:4])
+                        day = int(date_str[4:6])
+                        data_op = f"{year}-{month:02d}-{day:02d}"
+                    except:
+                        data_op = ""
+                else:
+                    data_op = ""
+
+                # Verifică dacă este Credit (C) sau Debit (D)
+                # Poziția depinde de format - căutăm C sau D urmat de sumă
+                is_credit = False
+                suma = 0.0
+
+                # Găsește poziția C/D și suma
+                # Format tipic după dată: MMDDC529,38N sau D529,38N
+                rest = statement_line[6:]  # După data YYMMDD
+
+                # Saltă data secundară (4 cifre MMDD) dacă există
+                if len(rest) >= 4 and rest[:4].isdigit():
+                    rest = rest[4:]
+
+                # Acum ar trebui să fie C sau D urmat de sumă
+                if rest.startswith('C'):
+                    is_credit = True
+                    rest = rest[1:]
+                elif rest.startswith('D'):
+                    is_credit = False
+                    rest = rest[1:]
+
+                # Extrage suma (până la prima literă non-cifră, virgulă)
+                suma_match = re.match(r'([\d,]+)', rest)
+                if suma_match:
+                    suma_str = suma_match.group(1).replace(',', '.')
+                    try:
+                        suma = float(suma_str)
+                    except:
+                        suma = 0.0
+
+                # Extrage referința OP (după //)
+                ref_match = re.search(r'//(\S+)', statement_line)
+                op_ref = ref_match.group(1) if ref_match else ""
+
+                # Citește liniile :86: (detalii) - pot fi mai multe linii
+                details_lines = []
+                j = i + 1
+                while j < len(lines):
+                    next_line = lines[j].strip()
+                    if next_line.startswith(':86:'):
+                        details_lines.append(next_line[4:])  # Elimină ':86:'
+                        j += 1
+                        # Continuă să citească liniile care fac parte din detalii
+                        while j < len(lines) and not lines[j].strip().startswith(':'):
+                            details_lines.append(lines[j].strip())
+                            j += 1
+                        break
+                    elif next_line.startswith(':'):
+                        break
+                    j += 1
+
+                details_text = ' '.join(details_lines)
+
+                # Procesează doar tranzacțiile credit relevante
+                if is_credit and suma > 0:
+                    # Verifică dacă este o tranzacție relevantă (GLS, Sameday, Netopia, eMag)
+                    is_relevant = any(keyword in details_text.upper() for keyword in [
+                        'GLS', 'GENERAL LOGISTICS',
+                        'DELIVERY SOLUTIONS', 'SAMEDAY',
+                        'NETOPIA', 'BATCHID',
+                        'DANTE INTERNATIONAL', 'EMAG'
+                    ])
+
+                    if is_relevant:
+                        # Extrage batchId dacă există (pentru Netopia)
+                        batchid_in_details = None
+                        batch_match = re.search(r'BATCHID\s+(\d+)', details_text, re.IGNORECASE)
+                        if batch_match:
+                            batchid_in_details = batch_match.group(1)
+
+                        referinte.append((op_ref, suma, data_op, batchid_in_details, details_text))
+                        print(f"MT940: Găsit credit relevant: {suma:.2f} RON, ref: {op_ref}, detalii: {details_text[:80]}...")
+
+                i = j if j > i else i + 1
+            else:
+                i += 1
+
+    except Exception as e:
+        print(f"Eroare la parsarea MT940 {file_path}: {e}")
+
+    return referinte
+
+
 def extrage_referinte_op_din_extras(extras_path):
     referinte = []
     try:
-        if extras_path.lower().endswith('.xml'):
+        # Verifică dacă este un folder (pentru MT940 multiple files)
+        if os.path.isdir(extras_path):
+            print(f"MT940: Procesez folder {extras_path}")
+            mt940_files = [f for f in os.listdir(extras_path) if f.lower().endswith('.txt') and 'MT940' in f.upper()]
+            print(f"MT940: Găsite {len(mt940_files)} fișiere MT940")
+
+            for filename in mt940_files:
+                file_path = os.path.join(extras_path, filename)
+                file_refs = parse_mt940_file(file_path)
+                referinte.extend(file_refs)
+
+            print(f"MT940: Total {len(referinte)} tranzacții relevante extrase din folder")
+
+        elif extras_path.lower().endswith('.xml'):
             tree = ET.parse(extras_path)
             root = tree.getroot()
             for movement in root.findall('.//movement'):
@@ -3538,42 +3675,53 @@ def extrage_referinte_op_din_extras(extras_path):
                         op = ".".join(parts[:2])
                     suma_str = credit_element.text
                     data_op = value_date_element.text if value_date_element is not None else ""
-                    
+
                     # Extrage batchId din details dacă există
                     batchid_in_details = None
                     if "BatchId" in details_text:
                         batch_match = re.search(r'BatchId\s+(\d+)', details_text)
                         if batch_match:
                             batchid_in_details = batch_match.group(1)
-                    
+
                     try:
                         suma_float = float(suma_str)
                         if suma_float > 0 and ("OLP1." in op or "DELIVERY SOLUTIONS SA" in details_text or "NETOPIA FINANCIAL SERVICES SA" in details_text or "DANTE INTERNATIONAL SA" in details_text):
                             referinte.append((op, suma_float, data_op, batchid_in_details, details_text))
                     except ValueError:
                         continue
+
         elif extras_path.lower().endswith('.txt'):
+            # Verifică dacă este format MT940
             with open(extras_path, 'r', encoding='utf-8') as f:
-                text = f.read()
-            matches = re.findall(r'(OLP1\.\d+)[^\d]{1,20}([\d\.,]{3,})', text)
-            for op, suma in matches:
-                parts = op.split('.')
-                if len(parts) > 2:
-                    op = ".".join(parts[:2])
-                suma = suma.replace('.', '').replace(',', '.')
-                try:
-                    suma_float = float(suma)
-                    referinte.append((op, suma_float, "", None, ""))  # Fără dată și batchid în TXT
-                except:
-                    continue
+                content = f.read()
+
+            if ':20:' in content and ':61:' in content:
+                # Este format MT940
+                print(f"MT940: Detectat fișier MT940 individual: {extras_path}")
+                referinte = parse_mt940_file(extras_path)
+            else:
+                # Format TXT vechi (pentru compatibilitate)
+                matches = re.findall(r'(OLP1\.\d+)[^\d]{1,20}([\d\.,]{3,})', content)
+                for op, suma in matches:
+                    parts = op.split('.')
+                    if len(parts) > 2:
+                        op = ".".join(parts[:2])
+                    suma = suma.replace('.', '').replace(',', '.')
+                    try:
+                        suma_float = float(suma)
+                        referinte.append((op, suma_float, "", None, ""))  # Fără dată și batchid în TXT
+                    except:
+                        continue
         else:
-            print(f"Tip de fișier extras bancar nevalid: {extras_path}. Se acceptă doar .xml sau .txt.")
+            print(f"Tip de fișier extras bancar nevalid: {extras_path}. Se acceptă .xml, .txt (MT940), sau folder cu fișiere MT940.")
     except FileNotFoundError:
-        print(f"Fișierul extras bancar nu a fost găsit: {extras_path}")
+        print(f"Fișierul/folderul extras bancar nu a fost găsit: {extras_path}")
     except ET.ParseError as e:
         print(f"Eroare la parsarea fișierului XML {extras_path}: {e}")
     except Exception as e:
         print(f"Eroare la citirea extrasului bancar: {e}")
+        import traceback
+        traceback.print_exc()
     print(f"Extracted OP references: {referinte}") # Debug print
     return referinte
 
