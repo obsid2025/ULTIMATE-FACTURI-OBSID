@@ -3119,6 +3119,9 @@ class FacturiApp(tk.Tk):
         if rezultate_emag:
             referinte_op = extrage_referinte_op_din_extras(self.path_extras.get())
             emag_fill = PatternFill(start_color="FFFFA500", end_color="FFFFA500", fill_type="solid") # Culoare portocalie pentru eMag
+            
+            # Tracking pentru OP-uri deja folosite (pentru a preveni alocare multiplă)
+            ops_folosite = []
 
             for rezultat in rezultate_emag:
                 fisier = rezultat['fisier']  # Numele fișierului eMag
@@ -3164,14 +3167,22 @@ class FacturiApp(tk.Tk):
                     facturi_text = ""
                 
                 # Caută OP-ul potrivit după suma finală și identificarea "DANTE INTERNATIONAL SA" în detalii
+                # IMPORTANT: Verifică dacă OP-ul nu a fost deja folosit pentru altă perioadă
                 op_gasit = ""
                 data_op = ""
                 for op, suma_op, data, batchid_details, details_text in referinte_op:
                     if "DANTE INTERNATIONAL SA" in details_text:
+                        # Verifică dacă OP-ul a fost deja alocat altei perioade
+                        if op in ops_folosite:
+                            print(f"eMag: Skipping OP {op} - deja folosit pentru altă perioadă")
+                            continue
+                        
                         diff = abs(float(suma_op) - suma_finala_pentru_op)
                         if diff < 1:
                             op_gasit = op
                             data_op = data
+                            ops_folosite.append(op)  # Marchează OP-ul ca folosit
+                            print(f"eMag: OP alocat pentru perioada {ref_period}: {op} ({suma_op:.2f} RON)")
                             break
 
                 # --- SORTARE CRONOLOGICĂ DUPĂ NUMĂRUL FACTURII ---
