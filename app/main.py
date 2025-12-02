@@ -630,12 +630,91 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+def get_page_slug(page_name: str) -> str:
+    """Convert page name to URL slug."""
+    slugs = {
+        "Dashboard": "dashboard",
+        "Profit Dashboard": "profit",
+        "Raport OP-uri": "raport-opuri",
+        "Procesare Facturi": "procesare",
+        "Incasari MT940": "incasari",
+        "Sincronizare Date": "sincronizare",
+        "Setari": "setari"
+    }
+    return slugs.get(page_name, "dashboard")
+
+
+def get_page_from_slug(slug: str) -> str:
+    """Convert URL slug to page name."""
+    pages = {
+        "dashboard": "Dashboard",
+        "profit": "Profit Dashboard",
+        "raport-opuri": "Raport OP-uri",
+        "procesare": "Procesare Facturi",
+        "incasari": "Incasari MT940",
+        "sincronizare": "Sincronizare Date",
+        "setari": "Setari"
+    }
+    return pages.get(slug, "Raport OP-uri")
+
+
+def navigate_to(page_name: str):
+    """Navigate to a page and update URL."""
+    st.session_state.current_page = page_name
+    slug = get_page_slug(page_name)
+    st.query_params["page"] = slug
+
+
 def main():
     # Initialize session state for auth
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
         st.session_state.username = None
         st.session_state.name = None
+
+    # Get page from URL query params
+    url_page = st.query_params.get("page", None)
+
+    # Determine if user is authenticated
+    authenticated = is_authenticated()
+
+    # Pages available for unauthenticated users (visitors)
+    public_pages = ["Raport OP-uri"]
+
+    # All pages for authenticated users
+    all_pages = [
+        "Dashboard",
+        "Profit Dashboard",
+        "Raport OP-uri",
+        "Procesare Facturi",
+        "Incasari MT940",
+        "Sincronizare Date",
+        "Setari"
+    ]
+
+    # Determine available pages based on auth status
+    available_pages = all_pages if authenticated else public_pages
+
+    # Initialize or sync current page from URL
+    if url_page:
+        page_from_url = get_page_from_slug(url_page)
+        # Check if user has access to this page
+        if page_from_url in available_pages:
+            st.session_state.current_page = page_from_url
+        else:
+            # Redirect to default allowed page
+            st.session_state.current_page = "Raport OP-uri"
+            st.query_params["page"] = "raport-opuri"
+    elif 'current_page' not in st.session_state:
+        # Default page based on auth status
+        default_page = "Dashboard" if authenticated else "Raport OP-uri"
+        st.session_state.current_page = default_page
+        st.query_params["page"] = get_page_slug(default_page)
+
+    # Ensure current page is in available pages
+    if st.session_state.current_page not in available_pages:
+        st.session_state.current_page = "Raport OP-uri"
+        st.query_params["page"] = "raport-opuri"
 
     # Sidebar - always visible
     with st.sidebar:
@@ -655,7 +734,7 @@ def main():
         # User profile - show visitor or logged in user
         user_name = get_user_name()
         user_initial = user_name[0].upper() if user_name else 'V'
-        user_role = "Administrator" if is_authenticated() else "Vizualizare"
+        user_role = "Administrator" if authenticated else "Vizualizare"
         st.markdown(f"""
         <div class="user-profile">
             <div class="user-avatar">{user_initial}</div>
@@ -670,12 +749,8 @@ def main():
         st.markdown('<div class="nav-section">', unsafe_allow_html=True)
         st.markdown('<div class="nav-label">Meniu Principal</div>', unsafe_allow_html=True)
 
-        # Initialize current page
-        if 'current_page' not in st.session_state:
-            st.session_state.current_page = "Dashboard"
-
-        # Navigation items without emojis
-        nav_items = [
+        # Navigation items with descriptions (for all pages)
+        nav_items_full = [
             ("Dashboard", "Vedere generala"),
             ("Profit Dashboard", "Profit zilnic/lunar/anual"),
             ("Raport OP-uri", "Export contabilitate"),
@@ -685,6 +760,9 @@ def main():
             ("Setari", "Configurare")
         ]
 
+        # Filter navigation items based on auth status
+        nav_items = [(name, desc) for name, desc in nav_items_full if name in available_pages]
+
         for page_name, _ in nav_items:
             is_active = st.session_state.current_page == page_name
 
@@ -692,7 +770,7 @@ def main():
                 st.markdown('<div class="nav-active">', unsafe_allow_html=True)
 
             if st.button(page_name, key=f"nav_{page_name}", use_container_width=True):
-                st.session_state.current_page = page_name
+                navigate_to(page_name)
                 st.rerun()
 
             if is_active:
@@ -703,7 +781,7 @@ def main():
         # Login/Logout at bottom
         st.markdown("---")
         st.markdown('<div class="logout-section">', unsafe_allow_html=True)
-        if is_authenticated():
+        if authenticated:
             if st.button("Deconectare", key="logout_btn", use_container_width=True):
                 logout()
         else:
@@ -713,13 +791,19 @@ def main():
         st.markdown('</div>', unsafe_allow_html=True)
 
     # Show login form if requested
-    if st.session_state.get('show_login', False) and not is_authenticated():
+    if st.session_state.get('show_login', False) and not authenticated:
         login_form()
         st.session_state.show_login = False
         return
 
     # Main content
-    page = st.session_state.get('current_page', 'Dashboard')
+    page = st.session_state.get('current_page', 'Raport OP-uri')
+
+    # Ensure URL is in sync with current page
+    current_slug = st.query_params.get("page", "")
+    expected_slug = get_page_slug(page)
+    if current_slug != expected_slug:
+        st.query_params["page"] = expected_slug
 
     if page == "Dashboard":
         show_dashboard()
@@ -805,12 +889,12 @@ def show_dashboard():
 
     with col1:
         if st.button("Procesare Noua", use_container_width=True, key="dash_process"):
-            st.session_state.current_page = 'Procesare Facturi'
+            navigate_to('Procesare Facturi')
             st.rerun()
 
     with col2:
         if st.button("Vizualizeaza Incasari", use_container_width=True, key="dash_incasari"):
-            st.session_state.current_page = 'Incasari MT940'
+            navigate_to('Incasari MT940')
             st.rerun()
 
     with col3:
