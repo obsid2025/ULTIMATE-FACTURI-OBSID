@@ -1358,9 +1358,18 @@ def show_data_sync():
     st.markdown("""
     <div class="page-header">
         <h1 class="page-title">Sincronizare Date</h1>
-        <p class="page-subtitle">Import MT940 si sincronizare Oblio cu Supabase</p>
+        <p class="page-subtitle">Import MT940, sincronizare Oblio si Netopia cu Supabase</p>
     </div>
     """, unsafe_allow_html=True)
+
+    # Import Netopia/Gmail modules
+    try:
+        from utils.gmail_api import is_gmail_authenticated, get_gmail_service, get_all_netopia_batch_ids
+        from utils.netopia_api import sync_netopia_batch, test_netopia_connection
+        gmail_available = True
+    except ImportError as e:
+        gmail_available = False
+        st.warning(f"Modulele Gmail/Netopia nu sunt disponibile: {e}")
 
     # Connection status
     st.markdown("""
@@ -1370,7 +1379,7 @@ def show_data_sync():
     </div>
     """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         supabase_ok = test_supabase()
         if supabase_ok:
@@ -1384,6 +1393,26 @@ def show_data_sync():
             st.success("Oblio API: Conectat")
         else:
             st.error("Oblio API: Deconectat")
+
+    with col3:
+        if gmail_available:
+            gmail_ok = is_gmail_authenticated()
+            if gmail_ok:
+                st.success("Gmail API: Conectat")
+            else:
+                st.warning("Gmail API: Neautorizat")
+        else:
+            st.error("Gmail API: Indisponibil")
+
+    with col4:
+        if gmail_available:
+            netopia_ok = test_netopia_connection()
+            if netopia_ok:
+                st.success("Netopia API: Configurat")
+            else:
+                st.warning("Netopia API: Neconfigurat")
+        else:
+            st.error("Netopia API: Indisponibil")
 
     st.markdown("---")
 
@@ -1498,6 +1527,106 @@ def show_data_sync():
                                 st.warning(err)
                 except Exception as e:
                     st.error(f"Eroare la sincronizare: {str(e)}")
+
+    # Netopia sync section
+    st.markdown("---")
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Sincronizare Netopia (Automat din Gmail)</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if gmail_available:
+        st.info("Cauta automat email-urile de la Netopia cu rapoarte de decontare si importa tranzactiile.")
+
+        col_net1, col_net2 = st.columns(2)
+
+        with col_net1:
+            # Gmail authorization
+            gmail_authenticated = is_gmail_authenticated()
+
+            if not gmail_authenticated:
+                st.warning("Gmail API nu este autorizat. Apasa butonul pentru a autoriza accesul.")
+                if st.button("Autorizeaza Gmail", key="btn_auth_gmail", use_container_width=True):
+                    try:
+                        with st.spinner("Se deschide browser-ul pentru autorizare..."):
+                            service = get_gmail_service()
+                        st.success("Gmail autorizat cu succes! Reincarca pagina.")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Eroare la autorizare: {str(e)}")
+            else:
+                # Fetch batch IDs from Gmail
+                days_back = st.slider("Cauta in ultimele N zile", min_value=7, max_value=90, value=30, key="netopia_days")
+
+                if st.button("Cauta Rapoarte Netopia", key="btn_search_netopia", use_container_width=True):
+                    with st.spinner("Se cauta email-uri Netopia..."):
+                        try:
+                            batch_ids = get_all_netopia_batch_ids(days_back=days_back)
+                            st.session_state['netopia_batches'] = batch_ids
+                            if batch_ids:
+                                st.success(f"S-au gasit {len(batch_ids)} rapoarte Netopia")
+                            else:
+                                st.warning("Nu s-au gasit rapoarte Netopia in perioada selectata")
+                        except Exception as e:
+                            st.error(f"Eroare la cautare: {str(e)}")
+
+        with col_net2:
+            # Show found batches and sync button
+            batches = st.session_state.get('netopia_batches', [])
+
+            if batches:
+                st.write("**Rapoarte gasite:**")
+                for batch in batches[:10]:
+                    st.write(f"- BatchId: **{batch['batch_id']}** ({batch['date'][:20]}...)")
+
+                # Netopia API Key input
+                netopia_key = st.text_input(
+                    "Netopia API Key",
+                    value=os.getenv('NETOPIA_API_KEY', ''),
+                    type="password",
+                    key="netopia_api_key"
+                )
+
+                if st.button("Sincronizeaza Toate", key="btn_sync_all_netopia", use_container_width=True, type="primary"):
+                    if not netopia_key:
+                        st.error("Introdu Netopia API Key")
+                    else:
+                        progress = st.progress(0)
+                        status = st.empty()
+
+                        total_transactions = 0
+                        total_amount = 0
+                        errors = []
+
+                        for i, batch in enumerate(batches):
+                            status.text(f"Se sincronizeaza BatchId {batch['batch_id']}...")
+                            progress.progress((i + 1) / len(batches))
+
+                            try:
+                                result = sync_netopia_batch(batch['batch_id'], netopia_key)
+                                if result['success']:
+                                    total_transactions += result['count']
+                                    total_amount += result['total_amount']
+                                else:
+                                    errors.append(f"BatchId {batch['batch_id']}: {result['error']}")
+                            except Exception as e:
+                                errors.append(f"BatchId {batch['batch_id']}: {str(e)}")
+
+                        progress.progress(100)
+                        status.text("Sincronizare completa!")
+
+                        st.success(f"Sincronizate {total_transactions} tranzactii, total {total_amount:,.2f} RON")
+
+                        if errors:
+                            with st.expander(f"Erori ({len(errors)})"):
+                                for err in errors:
+                                    st.warning(err)
+            else:
+                st.info("Apasa 'Cauta Rapoarte Netopia' pentru a gasi rapoartele din Gmail")
+    else:
+        st.error("Modulele Gmail/Netopia nu sunt instalate. Ruleaza: pip install google-auth-oauthlib google-api-python-client")
 
     # Sync logs
     st.markdown("---")

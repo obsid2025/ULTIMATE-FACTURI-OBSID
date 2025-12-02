@@ -56,3 +56,7 @@ logs/
 *.tmp
 *.temp
 .temp/
+
+# Google OAuth credentials (sensitive!)
+app/credentials/gmail_token.pickle
+app/credentials/gmail_credentials.json
