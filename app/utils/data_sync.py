@@ -278,3 +278,85 @@ def get_recent_sync_logs(limit: int = 10) -> List[Dict]:
         .execute()
 
     return response.data
+
+
+def get_opuri_report_data(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> List[Dict]:
+    """
+    Get data for OP-uri report - combines bank transactions with invoices.
+
+    Returns:
+        List of dicts with report data grouped by OP
+    """
+    supabase = get_supabase_client()
+
+    # Get bank transactions
+    query = supabase.table('bank_transactions').select('*')
+
+    if start_date:
+        query = query.gte('transaction_date', start_date.isoformat())
+    if end_date:
+        query = query.lte('transaction_date', end_date.isoformat())
+
+    response = query.order('transaction_date', desc=True).execute()
+    transactions = response.data
+
+    # Get all invoices for reference
+    inv_response = supabase.table('invoices').select('*').execute()
+    invoices = {inv['oblio_id']: inv for inv in inv_response.data}
+
+    # Build report data
+    report_data = []
+    for trans in transactions:
+        report_data.append({
+            'data_op': trans.get('transaction_date', ''),
+            'numar_op': trans.get('op_reference', ''),
+            'nume_borderou': trans.get('file_name', ''),
+            'curier': trans.get('source', ''),
+            'order_id': '',  # Will be filled from matching
+            'numar_factura': '',  # Will be filled from matching
+            'suma': trans.get('amount', 0),
+            'erori': 'NU',
+            'diferenta_emag': '',
+            'facturi_comision_emag': ''
+        })
+
+    return report_data
+
+
+def get_invoices_for_period(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> List[Dict]:
+    """Get invoices for a specific period."""
+    supabase = get_supabase_client()
+
+    query = supabase.table('invoices').select('*')
+
+    if start_date:
+        query = query.gte('issue_date', start_date.isoformat())
+    if end_date:
+        query = query.lte('issue_date', end_date.isoformat())
+
+    response = query.order('issue_date', desc=True).execute()
+    return response.data
+
+
+def get_transactions_for_period(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> List[Dict]:
+    """Get bank transactions for a specific period."""
+    supabase = get_supabase_client()
+
+    query = supabase.table('bank_transactions').select('*')
+
+    if start_date:
+        query = query.gte('transaction_date', start_date.isoformat())
+    if end_date:
+        query = query.lte('transaction_date', end_date.isoformat())
+
+    response = query.order('transaction_date').execute()
+    return response.data

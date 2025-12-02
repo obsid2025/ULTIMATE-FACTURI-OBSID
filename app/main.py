@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import utils
-from utils.auth import login_form, logout
+from utils.auth import login_form, logout, is_authenticated, get_user_name, check_auth_for_action
 from utils.mt940_parser import extrage_referinte_op_din_mt940_folder, get_sursa_incasare
 from utils.processors import proceseaza_borderouri_gls, proceseaza_borderouri_sameday, proceseaza_netopia
 from utils.export import genereaza_export_excel
@@ -24,7 +24,9 @@ from utils.data_sync import (
     sync_oblio_invoices,
     get_profit_data,
     get_dashboard_stats,
-    get_recent_sync_logs
+    get_recent_sync_logs,
+    get_transactions_for_period,
+    get_invoices_for_period
 )
 from utils.supabase_client import test_connection as test_supabase
 from utils.oblio_api import test_connection as test_oblio
@@ -623,12 +625,13 @@ st.markdown("""
 
 
 def main():
-    # Check authentication
-    if not st.session_state.get('authenticated', False):
-        login_form()
-        return
+    # Initialize session state for auth
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+        st.session_state.username = None
+        st.session_state.name = None
 
-    # Sidebar
+    # Sidebar - always visible
     with st.sidebar:
         # Brand header
         st.markdown("""
@@ -643,15 +646,16 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-        # User profile
-        user_name = st.session_state.get('name', 'User')
-        user_initial = user_name[0].upper() if user_name else 'U'
+        # User profile - show visitor or logged in user
+        user_name = get_user_name()
+        user_initial = user_name[0].upper() if user_name else 'V'
+        user_role = "Administrator" if is_authenticated() else "Vizualizare"
         st.markdown(f"""
         <div class="user-profile">
             <div class="user-avatar">{user_initial}</div>
             <div class="user-details">
                 <div class="user-name">{user_name}</div>
-                <div class="user-role">Administrator</div>
+                <div class="user-role">{user_role}</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -668,6 +672,7 @@ def main():
         nav_items = [
             ("Dashboard", "Vedere generala"),
             ("Profit Dashboard", "Profit zilnic/lunar/anual"),
+            ("Raport OP-uri", "Export contabilitate"),
             ("Procesare Facturi", "Incarca si proceseaza"),
             ("Incasari MT940", "Extrase bancare"),
             ("Sincronizare Date", "Oblio si MT940"),
@@ -689,12 +694,23 @@ def main():
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Logout at bottom
+        # Login/Logout at bottom
         st.markdown("---")
         st.markdown('<div class="logout-section">', unsafe_allow_html=True)
-        if st.button("Deconectare", key="logout_btn", use_container_width=True):
-            logout()
+        if is_authenticated():
+            if st.button("Deconectare", key="logout_btn", use_container_width=True):
+                logout()
+        else:
+            if st.button("Autentificare", key="login_btn", use_container_width=True):
+                st.session_state.show_login = True
+                st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
+
+    # Show login form if requested
+    if st.session_state.get('show_login', False) and not is_authenticated():
+        login_form()
+        st.session_state.show_login = False
+        return
 
     # Main content
     page = st.session_state.get('current_page', 'Dashboard')
@@ -703,6 +719,8 @@ def main():
         show_dashboard()
     elif page == "Profit Dashboard":
         show_profit_dashboard()
+    elif page == "Raport OP-uri":
+        show_raport_opuri()
     elif page == "Procesare Facturi":
         show_procesare()
     elif page == "Incasari MT940":
@@ -1442,6 +1460,220 @@ def show_data_sync():
             st.info("Nu exista sincronizari anterioare.")
     except Exception as e:
         st.warning(f"Nu s-a putut incarca istoricul: {str(e)}")
+
+
+def show_raport_opuri():
+    """Pagina Raport OP-uri pentru contabilitate."""
+    st.markdown("""
+    <div class="page-header">
+        <h1 class="page-title">Raport OP-uri</h1>
+        <p class="page-subtitle">Raport pentru contabilitate - Export facturi grupate pe OP-uri</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Period selector
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Selecteaza Perioada</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    from datetime import date, timedelta
+
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        # Default to current month
+        today = date.today()
+        first_day_of_month = today.replace(day=1)
+        start_date = st.date_input("De la", value=first_day_of_month, key="raport_start")
+    with col2:
+        end_date = st.date_input("Pana la", value=today, key="raport_end")
+    with col3:
+        # Quick period buttons
+        st.write("")  # Spacing
+        col_q1, col_q2, col_q3 = st.columns(3)
+        with col_q1:
+            if st.button("Luna curenta", key="btn_luna_curenta", use_container_width=True):
+                st.session_state.raport_start = first_day_of_month
+                st.session_state.raport_end = today
+                st.rerun()
+        with col_q2:
+            if st.button("Luna trecuta", key="btn_luna_trecuta", use_container_width=True):
+                last_month_end = first_day_of_month - timedelta(days=1)
+                last_month_start = last_month_end.replace(day=1)
+                st.session_state.raport_start = last_month_start
+                st.session_state.raport_end = last_month_end
+                st.rerun()
+        with col_q3:
+            if st.button("Tot anul", key="btn_tot_anul", use_container_width=True):
+                st.session_state.raport_start = date(today.year, 1, 1)
+                st.session_state.raport_end = today
+                st.rerun()
+
+    st.markdown("---")
+
+    try:
+        # Get transactions for the period
+        transactions = get_transactions_for_period(start_date, end_date)
+        invoices = get_invoices_for_period(start_date, end_date)
+
+        if not transactions:
+            st.info("Nu exista tranzactii bancare pentru perioada selectata. Importa date MT940 din pagina 'Sincronizare Date'.")
+            return
+
+        # Summary metrics
+        col1, col2, col3, col4 = st.columns(4)
+        total_suma = sum(float(t.get('amount', 0)) for t in transactions)
+        total_tranzactii = len(transactions)
+        total_facturi = len(invoices)
+
+        # Count by source
+        surse = {}
+        for t in transactions:
+            sursa = t.get('source', 'Altul')
+            surse[sursa] = surse.get(sursa, 0) + 1
+
+        with col1:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Total Incasari</div>
+                <div class="metric-value gold">{total_suma:,.2f} RON</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Tranzactii</div>
+                <div class="metric-value">{total_tranzactii}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Facturi Oblio</div>
+                <div class="metric-value">{total_facturi}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col4:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Surse</div>
+                <div class="metric-value">{len(surse)}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Data table section
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Tranzactii Bancare</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Build dataframe for display
+        display_data = []
+        for t in transactions:
+            display_data.append({
+                'Data OP': t.get('transaction_date', ''),
+                'Numar OP': t.get('op_reference', ''),
+                'Curier': t.get('source', ''),
+                'Suma': f"{float(t.get('amount', 0)):,.2f} RON",
+                'Detalii': (t.get('details', '') or '')[:50] + '...' if t.get('details') and len(t.get('details', '')) > 50 else t.get('details', '')
+            })
+
+        df_display = pd.DataFrame(display_data)
+        st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+        # Invoices section
+        if invoices:
+            st.markdown("""
+            <div class="section-header">
+                <span class="section-title">Facturi Oblio</span>
+                <div class="section-line"></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            inv_data = []
+            for inv in invoices:
+                inv_data.append({
+                    'Data': inv.get('issue_date', ''),
+                    'Serie': inv.get('series_name', ''),
+                    'Numar': inv.get('invoice_number', ''),
+                    'Client': inv.get('client_name', ''),
+                    'Total': f"{float(inv.get('total', 0)):,.2f} RON",
+                    'Tip': inv.get('invoice_type', ''),
+                    'Incasata': 'DA' if inv.get('is_collected') else 'NU'
+                })
+
+            df_inv = pd.DataFrame(inv_data)
+            st.dataframe(df_inv, use_container_width=True, hide_index=True)
+
+        # Export section
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Export</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            # Generate Excel for download
+            from io import BytesIO
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill
+
+            buffer = BytesIO()
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "OP-uri"
+
+            # Headers matching opuri_export.xlsx format
+            headers = ["Data OP", "Numar OP", "Nume Borderou", "Curier", "Order ID", "Numar Factura", "Suma", "Erori", "Diferenta eMag", "Facturi Comision eMag"]
+            ws.append(headers)
+
+            # Style header
+            header_fill = PatternFill(start_color="1e293b", end_color="1e293b", fill_type="solid")
+            header_font = Font(bold=True, color="FFFFFF")
+            for col in range(1, len(headers) + 1):
+                ws.cell(row=1, column=col).fill = header_fill
+                ws.cell(row=1, column=col).font = header_font
+
+            # Add transaction data
+            for t in transactions:
+                ws.append([
+                    t.get('transaction_date', ''),
+                    t.get('op_reference', ''),
+                    t.get('file_name', ''),
+                    t.get('source', ''),
+                    '',  # Order ID - TODO: from matching
+                    '',  # Numar Factura - TODO: from matching
+                    float(t.get('amount', 0)),
+                    'NU',
+                    '',
+                    ''
+                ])
+
+            wb.save(buffer)
+            buffer.seek(0)
+
+            timestamp = datetime.now().strftime("%Y%m%d")
+            st.download_button(
+                label="Descarca Raport Excel",
+                data=buffer,
+                file_name=f"opuri_export_{start_date}_{end_date}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
+
+        with col2:
+            st.info("Raportul contine tranzactiile bancare din perioada selectata. Pentru matching complet cu facturi, proceseaza mai intai datele din pagina 'Procesare Facturi'.")
+
+    except Exception as e:
+        st.error(f"Eroare la incarcarea datelor: {str(e)}")
+        import traceback
+        st.code(traceback.format_exc())
 
 
 if __name__ == "__main__":

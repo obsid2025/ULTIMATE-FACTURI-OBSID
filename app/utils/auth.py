@@ -260,6 +260,18 @@ def logout():
     st.rerun()
 
 
+def is_authenticated() -> bool:
+    """Check if user is authenticated."""
+    return st.session_state.get('authenticated', False)
+
+
+def get_user_name() -> str:
+    """Get current user's display name or 'Vizitator' if not logged in."""
+    if is_authenticated():
+        return st.session_state.get('name', 'User')
+    return 'Vizitator'
+
+
 def require_auth(func):
     """Decorator to require authentication."""
     def wrapper(*args, **kwargs):
@@ -268,3 +280,57 @@ def require_auth(func):
             st.stop()
         return func(*args, **kwargs)
     return wrapper
+
+
+@st.dialog("Autentificare necesara")
+def login_dialog():
+    """Show login dialog for actions that require authentication."""
+    credentials = get_credentials()
+
+    st.markdown("""
+    <style>
+    .auth-notice {
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.875rem;
+        color: #8b949e;
+        margin-bottom: 1rem;
+    }
+    </style>
+    <p class="auth-notice">Aceasta actiune necesita autentificare.</p>
+    """, unsafe_allow_html=True)
+
+    username = st.text_input("Utilizator", placeholder="Introdu utilizatorul", key="dialog_user")
+    password = st.text_input("Parola", type="password", placeholder="Introdu parola", key="dialog_pass")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Autentificare", use_container_width=True, type="primary"):
+            if username in credentials['usernames']:
+                stored_password = credentials['usernames'][username]['password']
+                if verify_password(password, stored_password):
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.session_state.name = credentials['usernames'][username]['name']
+                    st.session_state.auth_action_approved = True
+                    st.rerun()
+                else:
+                    st.error("Parola incorecta")
+            else:
+                st.error("Utilizator inexistent")
+    with col2:
+        if st.button("Anuleaza", use_container_width=True):
+            st.rerun()
+
+
+def check_auth_for_action(action_name: str = "aceasta actiune") -> bool:
+    """
+    Check if user is authenticated for an action.
+    If not, shows login dialog.
+    Returns True if authenticated, False otherwise.
+    """
+    if is_authenticated():
+        return True
+
+    # Show login dialog
+    login_dialog()
+    return False
