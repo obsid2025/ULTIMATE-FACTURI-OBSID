@@ -76,31 +76,27 @@ def login_form() -> Optional[str]:
 
     credentials = get_credentials()
 
-    # Premium CSS for login page - Luxury Fintech style
+    # Premium CSS for login page - GitHub Dark style with VCR OSD Mono
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+    @import url('https://db.onlinewebfonts.com/c/2545d122b16126676225a5b52283ae23?family=VCR+OSD+Mono');
 
     :root {
-        --bg-primary: #0a0a0b;
-        --bg-secondary: #111113;
-        --bg-card: #1c1c1f;
-        --border-subtle: #27272a;
-        --border-accent: #3f3f46;
-        --text-primary: #fafafa;
-        --text-secondary: #a1a1aa;
-        --text-muted: #71717a;
-        --accent-gold: #d4a853;
-        --accent-gold-light: #e8c97a;
-        --accent-gold-dark: #b8923f;
-        --shadow-gold: rgba(212, 168, 83, 0.15);
+        --bg-primary: #0d1117;
+        --bg-secondary: #161b22;
+        --bg-card: #1c2128;
+        --border-subtle: #30363d;
+        --border-accent: #484f58;
+        --text-primary: #e6edf3;
+        --text-secondary: #8b949e;
+        --text-muted: #6e7681;
+        --accent-primary: #8b949e;
+        --accent-emerald: #3fb950;
+        --accent-rose: #f85149;
     }
 
     .stApp {
         background-color: var(--bg-primary);
-        background-image:
-            radial-gradient(ellipse at 50% 0%, rgba(212, 168, 83, 0.08) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 100%, rgba(212, 168, 83, 0.03) 0%, transparent 50%);
     }
 
     .login-wrapper {
@@ -113,54 +109,41 @@ def login_form() -> Optional[str]:
 
     .login-card {
         width: 100%;
-        max-width: 420px;
+        max-width: 400px;
         background: var(--bg-card);
         border: 1px solid var(--border-subtle);
-        border-radius: 16px;
-        padding: 3rem 2.5rem;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .login-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+        border-radius: 6px;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
     }
 
     .login-header {
         text-align: center;
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
     }
 
     .login-logo {
-        width: 80px;
-        height: 80px;
-        margin-bottom: 1.5rem;
-        filter: drop-shadow(0 0 30px var(--shadow-gold));
+        width: 64px;
+        height: 64px;
+        margin-bottom: 1.25rem;
+        filter: grayscale(100%) brightness(1.2);
     }
 
     .login-title {
-        font-family: 'Playfair Display', Georgia, serif;
-        font-size: 1.75rem;
-        font-weight: 600;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 1.25rem;
+        font-weight: 400;
         color: var(--text-primary);
         margin: 0 0 0.5rem 0;
-        letter-spacing: -0.02em;
+        letter-spacing: 0.05em;
     }
 
     .login-subtitle {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.75rem;
-        color: var(--accent-gold);
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.625rem;
+        color: var(--text-secondary);
         text-transform: uppercase;
         letter-spacing: 0.15em;
-        font-weight: 500;
         margin: 0;
     }
 
@@ -172,18 +155,18 @@ def login_form() -> Optional[str]:
     }
 
     .stTextInput > div > div > input {
-        font-family: 'DM Sans', sans-serif !important;
+        font-family: 'VCR OSD Mono', monospace !important;
         background: var(--bg-secondary) !important;
         border: 1px solid var(--border-subtle) !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         color: var(--text-primary) !important;
-        padding: 0.875rem 1rem !important;
-        font-size: 0.9375rem !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 0.875rem !important;
     }
 
     .stTextInput > div > div > input:focus {
-        border-color: var(--accent-gold) !important;
-        box-shadow: 0 0 0 1px var(--accent-gold) !important;
+        border-color: var(--text-secondary) !important;
+        box-shadow: none !important;
     }
 
     .stTextInput > div > div > input::placeholder {
@@ -191,34 +174,33 @@ def login_form() -> Optional[str]:
     }
 
     .stTextInput > label {
-        font-family: 'DM Sans', sans-serif !important;
-        font-size: 0.8125rem !important;
-        font-weight: 500 !important;
+        font-family: 'VCR OSD Mono', monospace !important;
+        font-size: 0.625rem !important;
+        font-weight: 400 !important;
         color: var(--text-secondary) !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.1em !important;
     }
 
     /* Login button */
     .stButton > button {
-        font-family: 'DM Sans', sans-serif !important;
-        font-weight: 600 !important;
-        font-size: 0.9375rem !important;
-        letter-spacing: 0.02em !important;
-        background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%) !important;
-        color: var(--bg-primary) !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 0.875rem 1.5rem !important;
+        font-family: 'VCR OSD Mono', monospace !important;
+        font-weight: 400 !important;
+        font-size: 0.875rem !important;
+        letter-spacing: 0.05em !important;
+        background: var(--border-accent) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-accent) !important;
+        border-radius: 6px !important;
+        padding: 0.75rem 1.5rem !important;
         margin-top: 0.5rem !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 0 4px 12px var(--shadow-gold) !important;
+        transition: all 0.15s ease !important;
+        box-shadow: none !important;
     }
 
     .stButton > button:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 6px 20px var(--shadow-gold) !important;
-        background: linear-gradient(135deg, var(--accent-gold-light) 0%, var(--accent-gold) 100%) !important;
+        background: var(--text-muted) !important;
+        border-color: var(--text-muted) !important;
     }
 
     /* Hide Streamlit elements */
@@ -228,10 +210,10 @@ def login_form() -> Optional[str]:
 
     /* Alert styling */
     .stAlert {
-        background: rgba(244, 63, 94, 0.1) !important;
-        border: 1px solid #f43f5e !important;
-        border-radius: 8px !important;
-        font-family: 'DM Sans', sans-serif !important;
+        background: rgba(248, 81, 73, 0.1) !important;
+        border: 1px solid var(--accent-rose) !important;
+        border-radius: 6px !important;
+        font-family: 'VCR OSD Mono', monospace !important;
     }
     </style>
     """, unsafe_allow_html=True)

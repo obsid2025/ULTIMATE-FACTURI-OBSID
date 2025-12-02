@@ -28,39 +28,36 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Premium CSS - Luxury Fintech Aesthetic
+# Premium CSS - GitHub Dark Aesthetic
 st.markdown("""
 <style>
-    /* Import premium fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    /* Import VCR OSD Mono font */
+    @import url('https://db.onlinewebfonts.com/c/2545d122b16126676225a5b52283ae23?family=VCR+OSD+Mono');
 
-    /* CSS Variables */
+    /* CSS Variables - GitHub Dark Theme */
     :root {
-        --bg-primary: #0a0a0b;
-        --bg-secondary: #111113;
-        --bg-tertiary: #18181b;
-        --bg-card: #1c1c1f;
-        --border-subtle: #27272a;
-        --border-accent: #3f3f46;
-        --text-primary: #fafafa;
-        --text-secondary: #a1a1aa;
-        --text-muted: #71717a;
-        --accent-gold: #d4a853;
-        --accent-gold-light: #e8c97a;
-        --accent-gold-dark: #b8923f;
-        --accent-emerald: #34d399;
-        --accent-rose: #f43f5e;
-        --accent-blue: #60a5fa;
-        --shadow-gold: rgba(212, 168, 83, 0.15);
+        --bg-primary: #0d1117;
+        --bg-secondary: #161b22;
+        --bg-tertiary: #21262d;
+        --bg-card: #1c2128;
+        --border-subtle: #30363d;
+        --border-accent: #484f58;
+        --text-primary: #e6edf3;
+        --text-secondary: #8b949e;
+        --text-muted: #6e7681;
+        --accent-primary: #8b949e;
+        --accent-light: #c9d1d9;
+        --accent-dark: #6e7681;
+        --accent-emerald: #3fb950;
+        --accent-rose: #f85149;
+        --accent-blue: #58a6ff;
+        --shadow-primary: rgba(139, 148, 158, 0.1);
         --shadow-dark: rgba(0, 0, 0, 0.5);
     }
 
     /* Global resets */
     .main {
         background-color: var(--bg-primary);
-        background-image:
-            radial-gradient(ellipse at 20% 0%, rgba(212, 168, 83, 0.03) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 100%, rgba(212, 168, 83, 0.02) 0%, transparent 50%);
     }
 
     .stApp {
@@ -69,7 +66,7 @@ st.markdown("""
 
     /* Sidebar styling */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        background: var(--bg-secondary);
         border-right: 1px solid var(--border-subtle);
     }
 
@@ -77,40 +74,36 @@ st.markdown("""
         padding-top: 0;
     }
 
-    /* Typography */
+    /* Typography - VCR OSD Mono for everything */
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'Playfair Display', Georgia, serif !important;
+        font-family: 'VCR OSD Mono', monospace !important;
         color: var(--text-primary) !important;
-        letter-spacing: -0.02em;
+        letter-spacing: 0.05em;
     }
 
     h1 {
-        font-size: 2.5rem !important;
-        font-weight: 600 !important;
-        background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-gold) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        font-size: 1.75rem !important;
+        font-weight: 400 !important;
+        color: var(--text-primary) !important;
         margin-bottom: 0.5rem !important;
     }
 
     h2 {
-        font-size: 1.5rem !important;
-        font-weight: 500 !important;
+        font-size: 1.25rem !important;
+        font-weight: 400 !important;
         color: var(--text-primary) !important;
     }
 
     h3 {
-        font-size: 1.125rem !important;
-        font-weight: 500 !important;
+        font-size: 1rem !important;
+        font-weight: 400 !important;
         color: var(--text-secondary) !important;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        font-family: 'DM Sans', sans-serif !important;
     }
 
     p, span, div, label {
-        font-family: 'DM Sans', sans-serif;
+        font-family: 'VCR OSD Mono', monospace;
         color: var(--text-secondary);
     }
 
@@ -130,7 +123,7 @@ st.markdown("""
     .brand-logo img {
         width: 48px;
         height: 48px;
-        filter: drop-shadow(0 0 20px var(--shadow-gold));
+        filter: grayscale(100%) brightness(1.2);
     }
 
     .brand-text {
@@ -139,21 +132,20 @@ st.markdown("""
     }
 
     .brand-name {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.375rem;
-        font-weight: 600;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 1.125rem;
+        font-weight: 400;
         color: var(--text-primary);
-        letter-spacing: -0.02em;
+        letter-spacing: 0.05em;
         line-height: 1.2;
     }
 
     .brand-tagline {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.75rem;
-        color: var(--accent-gold);
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.625rem;
+        color: var(--text-secondary);
         text-transform: uppercase;
         letter-spacing: 0.15em;
-        font-weight: 500;
     }
 
     /* User profile section */
@@ -164,22 +156,22 @@ st.markdown("""
         padding: 0.875rem 1rem;
         background: var(--bg-tertiary);
         border: 1px solid var(--border-subtle);
-        border-radius: 10px;
+        border-radius: 6px;
         margin: 0 0.5rem 1rem 0.5rem;
     }
 
     .user-avatar {
         width: 36px;
         height: 36px;
-        background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
-        border-radius: 8px;
+        background: var(--border-accent);
+        border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Playfair Display', serif;
-        font-weight: 600;
+        font-family: 'VCR OSD Mono', monospace;
+        font-weight: 400;
         font-size: 1rem;
-        color: var(--bg-primary);
+        color: var(--text-primary);
     }
 
     .user-details {
@@ -187,16 +179,16 @@ st.markdown("""
     }
 
     .user-name {
-        font-family: 'DM Sans', sans-serif;
-        font-weight: 600;
+        font-family: 'VCR OSD Mono', monospace;
+        font-weight: 400;
         font-size: 0.875rem;
         color: var(--text-primary);
         line-height: 1.3;
     }
 
     .user-role {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.6875rem;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.625rem;
         color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -208,9 +200,9 @@ st.markdown("""
     }
 
     .nav-label {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.6875rem;
-        font-weight: 600;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.625rem;
+        font-weight: 400;
         color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.1em;
@@ -223,15 +215,15 @@ st.markdown("""
         background: transparent;
         color: var(--text-secondary);
         border: none;
-        border-radius: 8px;
+        border-radius: 4px;
         padding: 0.75rem 1rem;
         margin-bottom: 2px;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.9375rem;
-        font-weight: 500;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.875rem;
+        font-weight: 400;
         text-align: left;
         justify-content: flex-start;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.15s ease;
         position: relative;
         overflow: hidden;
     }
@@ -249,10 +241,10 @@ st.markdown("""
 
     /* Active navigation state */
     [data-testid="stSidebar"] .nav-active > button {
-        background: linear-gradient(90deg, var(--bg-card) 0%, transparent 100%) !important;
-        color: var(--accent-gold) !important;
-        border-left: 2px solid var(--accent-gold) !important;
-        border-radius: 0 8px 8px 0 !important;
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border-left: 2px solid var(--text-secondary) !important;
+        border-radius: 0 4px 4px 0 !important;
     }
 
     /* Logout button special styling */
@@ -271,7 +263,7 @@ st.markdown("""
     .logout-section .stButton > button:hover {
         border-color: var(--accent-rose) !important;
         color: var(--accent-rose) !important;
-        background: rgba(244, 63, 94, 0.1) !important;
+        background: rgba(248, 81, 73, 0.1) !important;
     }
 
     /* Main content area */
@@ -288,79 +280,61 @@ st.markdown("""
     }
 
     .page-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 2.25rem;
-        font-weight: 600;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 1.5rem;
+        font-weight: 400;
         color: var(--text-primary);
         margin: 0 0 0.5rem 0;
-        letter-spacing: -0.02em;
+        letter-spacing: 0.05em;
     }
 
     .page-subtitle {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 1rem;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.875rem;
         color: var(--text-muted);
         margin: 0;
     }
 
-    /* Metric cards - premium style */
+    /* Metric cards - GitHub style */
     .metric-card {
         background: var(--bg-card);
         border: 1px solid var(--border-subtle);
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 6px;
+        padding: 1.25rem;
         position: relative;
         overflow: hidden;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .metric-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, var(--accent-gold) 0%, transparent 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        transition: border-color 0.15s ease;
     }
 
     .metric-card:hover {
         border-color: var(--border-accent);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px var(--shadow-dark);
-    }
-
-    .metric-card:hover::before {
-        opacity: 1;
     }
 
     .metric-label {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.625rem;
+        font-weight: 400;
         color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        margin-bottom: 0.75rem;
-    }
-
-    .metric-value {
-        font-family: 'Playfair Display', serif;
-        font-size: 2rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        line-height: 1;
         margin-bottom: 0.5rem;
     }
 
+    .metric-value {
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 1.5rem;
+        font-weight: 400;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
     .metric-value.gold {
-        color: var(--accent-gold);
+        color: var(--accent-emerald);
     }
 
     .metric-change {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'VCR OSD Mono', monospace;
         font-size: 0.75rem;
         color: var(--accent-emerald);
     }
@@ -378,9 +352,9 @@ st.markdown("""
     }
 
     .section-title {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.8125rem;
-        font-weight: 600;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 400;
         color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.1em;
@@ -396,71 +370,69 @@ st.markdown("""
     [data-testid="stFileUploader"] {
         background: var(--bg-secondary);
         border: 1px dashed var(--border-accent);
-        border-radius: 12px;
+        border-radius: 6px;
         padding: 1.25rem;
-        transition: all 0.2s ease;
+        transition: all 0.15s ease;
     }
 
     [data-testid="stFileUploader"]:hover {
-        border-color: var(--accent-gold);
+        border-color: var(--text-secondary);
         background: var(--bg-tertiary);
     }
 
     [data-testid="stFileUploader"] label {
-        font-family: 'DM Sans', sans-serif !important;
-        font-weight: 500 !important;
+        font-family: 'VCR OSD Mono', monospace !important;
+        font-weight: 400 !important;
         color: var(--text-secondary) !important;
     }
 
-    /* Primary action buttons */
+    /* Primary action buttons - GitHub style */
     .stButton > button {
-        font-family: 'DM Sans', sans-serif;
-        font-weight: 600;
-        font-size: 0.9375rem;
+        font-family: 'VCR OSD Mono', monospace;
+        font-weight: 400;
+        font-size: 0.875rem;
         letter-spacing: 0.02em;
-        background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
-        color: var(--bg-primary);
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 2px 8px var(--shadow-gold);
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-accent);
+        border-radius: 6px;
+        padding: 0.625rem 1rem;
+        transition: all 0.15s ease;
+        box-shadow: none;
     }
 
     .stButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 16px var(--shadow-gold);
-        background: linear-gradient(135deg, var(--accent-gold-light) 0%, var(--accent-gold) 100%);
+        background: var(--border-accent);
+        border-color: var(--text-muted);
     }
 
     .stButton > button:active {
-        transform: translateY(0);
+        background: var(--bg-card);
     }
 
     .stButton > button:disabled {
-        background: var(--bg-tertiary);
+        background: var(--bg-secondary);
         color: var(--text-muted);
-        box-shadow: none;
+        border-color: var(--border-subtle);
         cursor: not-allowed;
     }
 
     /* Download button special */
     .stDownloadButton > button {
         background: transparent;
-        border: 1px solid var(--accent-gold);
-        color: var(--accent-gold);
-        box-shadow: none;
+        border: 1px solid var(--accent-emerald);
+        color: var(--accent-emerald);
     }
 
     .stDownloadButton > button:hover {
-        background: var(--accent-gold);
-        color: var(--bg-primary);
+        background: rgba(63, 185, 80, 0.1);
+        border-color: var(--accent-emerald);
     }
 
     /* Data tables */
     .stDataFrame {
         border: 1px solid var(--border-subtle);
-        border-radius: 12px;
+        border-radius: 6px;
         overflow: hidden;
     }
 
@@ -472,8 +444,8 @@ st.markdown("""
     .stAlert {
         background: var(--bg-card);
         border: 1px solid var(--border-subtle);
-        border-radius: 10px;
-        font-family: 'DM Sans', sans-serif;
+        border-radius: 6px;
+        font-family: 'VCR OSD Mono', monospace;
     }
 
     .stAlert [data-testid="stMarkdownContainer"] p {
@@ -482,41 +454,41 @@ st.markdown("""
 
     /* Success state */
     .stSuccess {
-        background: rgba(52, 211, 153, 0.1);
+        background: rgba(63, 185, 80, 0.1);
         border-color: var(--accent-emerald);
     }
 
     /* Warning state */
     .stWarning {
-        background: rgba(212, 168, 83, 0.1);
-        border-color: var(--accent-gold);
+        background: rgba(139, 148, 158, 0.1);
+        border-color: var(--accent-primary);
     }
 
     /* Error state */
     .stError {
-        background: rgba(244, 63, 94, 0.1);
+        background: rgba(248, 81, 73, 0.1);
         border-color: var(--accent-rose);
     }
 
     /* Progress bar */
     .stProgress > div > div {
-        background: linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%);
-        border-radius: 4px;
+        background: var(--text-secondary);
+        border-radius: 3px;
     }
 
     .stProgress > div {
         background: var(--bg-tertiary);
-        border-radius: 4px;
+        border-radius: 3px;
     }
 
     /* Expander */
     .streamlit-expanderHeader {
-        font-family: 'DM Sans', sans-serif;
-        font-weight: 500;
+        font-family: 'VCR OSD Mono', monospace;
+        font-weight: 400;
         color: var(--text-secondary);
         background: var(--bg-card);
         border: 1px solid var(--border-subtle);
-        border-radius: 8px;
+        border-radius: 6px;
     }
 
     .streamlit-expanderHeader:hover {
@@ -528,24 +500,24 @@ st.markdown("""
     .stMultiSelect [data-baseweb="select"] {
         background: var(--bg-secondary);
         border: 1px solid var(--border-subtle);
-        border-radius: 8px;
+        border-radius: 6px;
     }
 
     .stMultiSelect [data-baseweb="select"]:hover {
-        border-color: var(--accent-gold);
+        border-color: var(--text-secondary);
     }
 
     /* Metrics from Streamlit */
     [data-testid="stMetricValue"] {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.75rem;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 1.5rem;
         color: var(--text-primary);
     }
 
     [data-testid="stMetricLabel"] {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.625rem;
+        font-weight: 400;
         color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -555,9 +527,9 @@ st.markdown("""
     .info-box {
         background: var(--bg-card);
         border: 1px solid var(--border-subtle);
-        border-radius: 12px;
-        padding: 1.5rem;
-        font-family: 'DM Sans', sans-serif;
+        border-radius: 6px;
+        padding: 1.25rem;
+        font-family: 'VCR OSD Mono', monospace;
     }
 
     .info-box strong {
@@ -595,40 +567,39 @@ st.markdown("""
     .action-card {
         background: var(--bg-card);
         border: 1px solid var(--border-subtle);
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 6px;
+        padding: 1.25rem;
         text-align: center;
-        transition: all 0.2s ease;
+        transition: border-color 0.15s ease;
         cursor: pointer;
     }
 
     .action-card:hover {
-        border-color: var(--accent-gold);
-        background: var(--bg-tertiary);
+        border-color: var(--border-accent);
     }
 
     .action-icon {
-        width: 48px;
-        height: 48px;
-        margin: 0 auto 1rem auto;
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 0.75rem auto;
         background: var(--bg-tertiary);
-        border-radius: 12px;
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .action-title {
-        font-family: 'DM Sans', sans-serif;
-        font-weight: 600;
-        font-size: 0.9375rem;
+        font-family: 'VCR OSD Mono', monospace;
+        font-weight: 400;
+        font-size: 0.875rem;
         color: var(--text-primary);
         margin-bottom: 0.25rem;
     }
 
     .action-desc {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.8125rem;
+        font-family: 'VCR OSD Mono', monospace;
+        font-size: 0.75rem;
         color: var(--text-muted);
     }
 
