@@ -152,6 +152,67 @@ st.markdown("""
         box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
     }
 
+    /* Navigation buttons */
+    .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 0.875rem 1rem;
+        margin-bottom: 0.5rem;
+        background-color: transparent;
+        border: none;
+        border-radius: 8px;
+        color: #94a3b8;
+        font-size: 0.95rem;
+        font-weight: 500;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .nav-button:hover {
+        background-color: #334155;
+        color: #e2e8f0;
+    }
+
+    .nav-button.active {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .nav-button .nav-icon {
+        font-size: 1.25rem;
+        width: 24px;
+        text-align: center;
+    }
+
+    /* Sidebar navigation section */
+    [data-testid="stSidebar"] .stButton > button {
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid transparent;
+        text-align: left;
+        justify-content: flex-start;
+        padding: 0.875rem 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background-color: #334155;
+        color: #e2e8f0;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Active nav button in sidebar */
+    [data-testid="stSidebar"] .nav-active > button {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
     /* Tables */
     .dataframe {
         background-color: #1e293b !important;
@@ -235,15 +296,42 @@ def main():
 
         st.markdown("---")
 
-        # Navigation
+        # Navigation with buttons
         st.markdown("### Navigare")
-        page = st.radio(
-            "Selecteaza pagina",
-            ["Dashboard", "Procesare Facturi", "Incasari MT940", "Setari"],
-            label_visibility="collapsed"
-        )
+
+        # Initialize current page in session state
+        if 'current_page' not in st.session_state:
+            st.session_state.current_page = "Dashboard"
+
+        # Navigation buttons with icons
+        nav_items = [
+            ("Dashboard", "📊"),
+            ("Procesare Facturi", "📄"),
+            ("Incasari MT940", "🏦"),
+            ("Setari", "⚙️")
+        ]
+
+        for page_name, icon in nav_items:
+            is_active = st.session_state.current_page == page_name
+
+            # Apply active class styling
+            if is_active:
+                st.markdown('<div class="nav-active">', unsafe_allow_html=True)
+
+            if st.button(
+                f"{icon}  {page_name}",
+                key=f"nav_{page_name}",
+                use_container_width=True
+            ):
+                st.session_state.current_page = page_name
+                st.rerun()
+
+            if is_active:
+                st.markdown('</div>', unsafe_allow_html=True)
 
     # Main content based on selected page
+    page = st.session_state.get('current_page', 'Dashboard')
+
     if page == "Dashboard":
         show_dashboard()
     elif page == "Procesare Facturi":
