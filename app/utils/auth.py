@@ -76,10 +76,10 @@ def login_form() -> Optional[str]:
 
     credentials = get_credentials()
 
-    # Premium CSS for login page - GitHub Dark style with VCR OSD Mono
+    # Premium CSS for login page - GitHub Dark style with Inter font
     st.markdown("""
     <style>
-    @import url('https://db.onlinewebfonts.com/c/2545d122b16126676225a5b52283ae23?family=VCR+OSD+Mono');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     :root {
         --bg-primary: #0d1117;
@@ -130,20 +130,20 @@ def login_form() -> Optional[str]:
     }
 
     .login-title {
-        font-family: 'VCR OSD Mono', monospace;
-        font-size: 1.25rem;
-        font-weight: 400;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
         color: var(--text-primary);
         margin: 0 0 0.5rem 0;
-        letter-spacing: 0.05em;
+        letter-spacing: -0.01em;
     }
 
     .login-subtitle {
-        font-family: 'VCR OSD Mono', monospace;
-        font-size: 0.625rem;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 0.75rem;
         color: var(--text-secondary);
         text-transform: uppercase;
-        letter-spacing: 0.15em;
+        letter-spacing: 0.1em;
         margin: 0;
     }
 
@@ -155,13 +155,13 @@ def login_form() -> Optional[str]:
     }
 
     .stTextInput > div > div > input {
-        font-family: 'VCR OSD Mono', monospace !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         background: var(--bg-secondary) !important;
         border: 1px solid var(--border-subtle) !important;
         border-radius: 6px !important;
         color: var(--text-primary) !important;
         padding: 0.75rem 1rem !important;
-        font-size: 0.875rem !important;
+        font-size: 0.9rem !important;
     }
 
     .stTextInput > div > div > input:focus {
@@ -174,20 +174,20 @@ def login_form() -> Optional[str]:
     }
 
     .stTextInput > label {
-        font-family: 'VCR OSD Mono', monospace !important;
-        font-size: 0.625rem !important;
-        font-weight: 400 !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
         color: var(--text-secondary) !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.1em !important;
+        letter-spacing: 0.05em !important;
     }
 
     /* Login button */
     .stButton > button {
-        font-family: 'VCR OSD Mono', monospace !important;
-        font-weight: 400 !important;
-        font-size: 0.875rem !important;
-        letter-spacing: 0.05em !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+        letter-spacing: 0 !important;
         background: var(--border-accent) !important;
         color: var(--text-primary) !important;
         border: 1px solid var(--border-accent) !important;
@@ -213,7 +213,7 @@ def login_form() -> Optional[str]:
         background: rgba(248, 81, 73, 0.1) !important;
         border: 1px solid var(--accent-rose) !important;
         border-radius: 6px !important;
-        font-family: 'VCR OSD Mono', monospace !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
     </style>
     """, unsafe_allow_html=True)

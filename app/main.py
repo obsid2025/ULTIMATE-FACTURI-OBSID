@@ -28,6 +28,12 @@ from utils.data_sync import (
     get_transactions_for_period,
     get_invoices_for_period
 )
+from utils.matching_engine import (
+    generate_opuri_report_data,
+    export_opuri_to_excel,
+    get_matching_statistics,
+    search_invoice_by_amount_in_oblio
+)
 from utils.supabase_client import test_connection as test_supabase
 from utils.oblio_api import test_connection as test_oblio
 import plotly.express as px
@@ -44,8 +50,8 @@ st.set_page_config(
 # Premium CSS - GitHub Dark Aesthetic
 st.markdown("""
 <style>
-    /* Import VCR OSD Mono font */
-    @import url('https://db.onlinewebfonts.com/c/2545d122b16126676225a5b52283ae23?family=VCR+OSD+Mono');
+    /* Import Inter font - clean, modern, highly readable */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     /* CSS Variables - GitHub Dark Theme */
     :root {
@@ -87,36 +93,36 @@ st.markdown("""
         padding-top: 0;
     }
 
-    /* Typography - VCR OSD Mono for everything */
+    /* Typography - Inter for clean readability */
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'VCR OSD Mono', monospace !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         color: var(--text-primary) !important;
-        letter-spacing: 0.05em;
+        letter-spacing: -0.01em;
     }
 
     h1 {
         font-size: 1.75rem !important;
-        font-weight: 400 !important;
+        font-weight: 600 !important;
         color: var(--text-primary) !important;
         margin-bottom: 0.5rem !important;
     }
 
     h2 {
         font-size: 1.25rem !important;
-        font-weight: 400 !important;
+        font-weight: 600 !important;
         color: var(--text-primary) !important;
     }
 
     h3 {
-        font-size: 1rem !important;
-        font-weight: 400 !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
         color: var(--text-secondary) !important;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.05em;
     }
 
     p, span, div, label {
-        font-family: 'VCR OSD Mono', monospace;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         color: var(--text-secondary);
     }
 
@@ -1467,7 +1473,7 @@ def show_raport_opuri():
     st.markdown("""
     <div class="page-header">
         <h1 class="page-title">Raport OP-uri</h1>
-        <p class="page-subtitle">Raport pentru contabilitate - Export facturi grupate pe OP-uri</p>
+        <p class="page-subtitle">Raport pentru contabilitate - Export facturi grupate pe OP-uri cu matching automat</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1514,115 +1520,181 @@ def show_raport_opuri():
     st.markdown("---")
 
     try:
-        # Get transactions for the period
+        # Get data for the period
         transactions = get_transactions_for_period(start_date, end_date)
         invoices = get_invoices_for_period(start_date, end_date)
 
-        if not transactions:
-            st.info("Nu exista tranzactii bancare pentru perioada selectata. Importa date MT940 din pagina 'Sincronizare Date'.")
+        if not transactions and not invoices:
+            st.info("Nu exista date pentru perioada selectata. Importa date MT940 si sincronizeaza facturi din pagina 'Sincronizare Date'.")
             return
 
-        # Summary metrics
-        col1, col2, col3, col4 = st.columns(4)
-        total_suma = sum(float(t.get('amount', 0)) for t in transactions)
-        total_tranzactii = len(transactions)
-        total_facturi = len(invoices)
+        # Get matching statistics
+        stats = get_matching_statistics(start_date, end_date)
 
-        # Count by source
-        surse = {}
-        for t in transactions:
-            sursa = t.get('source', 'Altul')
-            surse[sursa] = surse.get(sursa, 0) + 1
+        # Summary metrics
+        col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
             st.markdown(f"""
             <div class="metric-card">
                 <div class="metric-label">Total Incasari</div>
-                <div class="metric-value gold">{total_suma:,.2f} RON</div>
+                <div class="metric-value gold">{stats['transactions_amount']:,.2f} RON</div>
             </div>
             """, unsafe_allow_html=True)
         with col2:
             st.markdown(f"""
             <div class="metric-card">
                 <div class="metric-label">Tranzactii</div>
-                <div class="metric-value">{total_tranzactii}</div>
+                <div class="metric-value">{stats['total_transactions']}</div>
             </div>
             """, unsafe_allow_html=True)
         with col3:
             st.markdown(f"""
             <div class="metric-card">
                 <div class="metric-label">Facturi Oblio</div>
-                <div class="metric-value">{total_facturi}</div>
+                <div class="metric-value">{stats['total_invoices']}</div>
             </div>
             """, unsafe_allow_html=True)
         with col4:
+            diff = stats['difference']
+            diff_color = "emerald" if abs(diff) < 1 else "rose"
             st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-label">Surse</div>
-                <div class="metric-value">{len(surse)}</div>
+                <div class="metric-label">Diferenta</div>
+                <div class="metric-value {diff_color}">{diff:+,.2f} RON</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col5:
+            surse_count = len(stats.get('by_source', {}))
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Surse Incasari</div>
+                <div class="metric-value">{surse_count}</div>
             </div>
             """, unsafe_allow_html=True)
 
-        # Data table section
-        st.markdown("""
-        <div class="section-header">
-            <span class="section-title">Tranzactii Bancare</span>
-            <div class="section-line"></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Build dataframe for display
-        display_data = []
-        for t in transactions:
-            display_data.append({
-                'Data OP': t.get('transaction_date', ''),
-                'Numar OP': t.get('op_reference', ''),
-                'Curier': t.get('source', ''),
-                'Suma': f"{float(t.get('amount', 0)):,.2f} RON",
-                'Detalii': (t.get('details', '') or '')[:50] + '...' if t.get('details') and len(t.get('details', '')) > 50 else t.get('details', '')
-            })
-
-        df_display = pd.DataFrame(display_data)
-        st.dataframe(df_display, use_container_width=True, hide_index=True)
-
-        # Invoices section
-        if invoices:
+        # Source breakdown
+        if stats.get('by_source'):
             st.markdown("""
             <div class="section-header">
-                <span class="section-title">Facturi Oblio</span>
+                <span class="section-title">Incasari pe Surse</span>
                 <div class="section-line"></div>
             </div>
             """, unsafe_allow_html=True)
 
-            inv_data = []
-            for inv in invoices:
-                inv_data.append({
-                    'Data': inv.get('issue_date', ''),
-                    'Serie': inv.get('series_name', ''),
-                    'Numar': inv.get('invoice_number', ''),
-                    'Client': inv.get('client_name', ''),
-                    'Total': f"{float(inv.get('total', 0)):,.2f} RON",
-                    'Tip': inv.get('invoice_type', ''),
-                    'Incasata': 'DA' if inv.get('is_collected') else 'NU'
+            source_cols = st.columns(len(stats['by_source']))
+            for i, (source, data) in enumerate(stats['by_source'].items()):
+                with source_cols[i]:
+                    color_map = {'GLS': 'blue', 'Sameday': 'rose', 'Netopia': 'cyan', 'eMag': 'orange'}
+                    color = color_map.get(source, 'default')
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <div class="metric-label">{source}</div>
+                        <div class="metric-value">{data['count']} tranz.</div>
+                        <div class="metric-sublabel">{data['amount']:,.2f} RON</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+        # Matching section with button
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Matching Tranzactii - Facturi</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_match1, col_match2 = st.columns([1, 3])
+        with col_match1:
+            run_matching = st.button("Ruleaza Matching", key="btn_run_matching", use_container_width=True, type="primary")
+
+        if run_matching or st.session_state.get('matching_results'):
+            with st.spinner("Se proceseaza matching-ul..."):
+                # Generate report data with matching
+                report_data = generate_opuri_report_data(start_date, end_date)
+                st.session_state['matching_results'] = report_data
+
+            if report_data:
+                # Count matches and errors
+                matched_count = sum(1 for r in report_data if r.get('numar_factura'))
+                error_count = sum(1 for r in report_data if r.get('erori') == 'DA')
+
+                st.success(f"Matching complet: {matched_count} potriviri, {error_count} erori")
+
+                # Display matched data
+                df_report = pd.DataFrame(report_data)
+                df_report = df_report.rename(columns={
+                    'data_op': 'Data OP',
+                    'numar_op': 'Numar OP',
+                    'nume_borderou': 'Borderou',
+                    'curier': 'Curier',
+                    'order_id': 'Order ID',
+                    'numar_factura': 'Nr. Factura',
+                    'suma': 'Suma',
+                    'erori': 'Erori',
+                    'diferenta_emag': 'Dif. eMag',
+                    'facturi_comision_emag': 'Facturi Comision'
                 })
 
-            df_inv = pd.DataFrame(inv_data)
-            st.dataframe(df_inv, use_container_width=True, hide_index=True)
+                # Style the dataframe
+                def highlight_errors(row):
+                    if row.get('Erori') == 'DA':
+                        return ['background-color: rgba(248, 81, 73, 0.2)'] * len(row)
+                    return [''] * len(row)
+
+                st.dataframe(
+                    df_report.style.apply(highlight_errors, axis=1),
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.warning("Nu s-au gasit date pentru matching in perioada selectata.")
+
+        # Transactions table (raw data)
+        if transactions:
+            with st.expander("Tranzactii Bancare (date brute)", expanded=False):
+                display_data = []
+                for t in transactions:
+                    display_data.append({
+                        'Data OP': t.get('transaction_date', ''),
+                        'Numar OP': t.get('op_reference', ''),
+                        'Curier': t.get('source', ''),
+                        'Suma': f"{float(t.get('amount', 0)):,.2f} RON",
+                        'Detalii': (t.get('details', '') or '')[:50] + '...' if t.get('details') and len(t.get('details', '')) > 50 else t.get('details', '')
+                    })
+                df_display = pd.DataFrame(display_data)
+                st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+        # Invoices section
+        if invoices:
+            with st.expander("Facturi Oblio (date brute)", expanded=False):
+                inv_data = []
+                for inv in invoices:
+                    inv_data.append({
+                        'Data': inv.get('issue_date', ''),
+                        'Serie': inv.get('series_name', ''),
+                        'Numar': inv.get('invoice_number', ''),
+                        'Client': inv.get('client_name', ''),
+                        'Total': f"{float(inv.get('total', 0)):,.2f} RON",
+                        'Tip': inv.get('invoice_type', ''),
+                        'Incasata': 'DA' if inv.get('is_collected') else 'NU'
+                    })
+                df_inv = pd.DataFrame(inv_data)
+                st.dataframe(df_inv, use_container_width=True, hide_index=True)
 
         # Export section
         st.markdown("""
         <div class="section-header">
-            <span class="section-title">Export</span>
+            <span class="section-title">Export Excel</span>
             <div class="section-line"></div>
         </div>
         """, unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
         with col1:
-            # Generate Excel for download
+            # Generate Excel with matching data
             from io import BytesIO
             from openpyxl import Workbook
-            from openpyxl.styles import Font, PatternFill
+            from openpyxl.styles import Font, PatternFill, Alignment
 
             buffer = BytesIO()
             wb = Workbook()
@@ -1634,41 +1706,101 @@ def show_raport_opuri():
             ws.append(headers)
 
             # Style header
-            header_fill = PatternFill(start_color="1e293b", end_color="1e293b", fill_type="solid")
+            header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
             header_font = Font(bold=True, color="FFFFFF")
             for col in range(1, len(headers) + 1):
-                ws.cell(row=1, column=col).fill = header_fill
-                ws.cell(row=1, column=col).font = header_font
+                cell = ws.cell(row=1, column=col)
+                cell.fill = header_fill
+                cell.font = header_font
+                cell.alignment = Alignment(horizontal='center')
 
-            # Add transaction data
-            for t in transactions:
+            # Color fills
+            gls_fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+            sameday_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+            netopia_fill = PatternFill(start_color="DAEEF3", end_color="DAEEF3", fill_type="solid")
+            emag_fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+            error_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+
+            # Use matching results if available, otherwise raw transactions
+            export_data = st.session_state.get('matching_results', [])
+            if not export_data:
+                export_data = [{
+                    'data_op': t.get('transaction_date', ''),
+                    'numar_op': t.get('op_reference', ''),
+                    'nume_borderou': t.get('file_name', ''),
+                    'curier': t.get('source', ''),
+                    'order_id': '',
+                    'numar_factura': '',
+                    'suma': float(t.get('amount', 0)),
+                    'erori': 'NU',
+                    'diferenta_emag': '',
+                    'facturi_comision_emag': ''
+                } for t in transactions]
+
+            for data in export_data:
                 ws.append([
-                    t.get('transaction_date', ''),
-                    t.get('op_reference', ''),
-                    t.get('file_name', ''),
-                    t.get('source', ''),
-                    '',  # Order ID - TODO: from matching
-                    '',  # Numar Factura - TODO: from matching
-                    float(t.get('amount', 0)),
-                    'NU',
-                    '',
-                    ''
+                    data.get('data_op', ''),
+                    data.get('numar_op', ''),
+                    data.get('nume_borderou', ''),
+                    data.get('curier', ''),
+                    data.get('order_id', ''),
+                    data.get('numar_factura', ''),
+                    data.get('suma', 0),
+                    data.get('erori', 'NU'),
+                    data.get('diferenta_emag', ''),
+                    data.get('facturi_comision_emag', '')
                 ])
+
+                row_idx = ws.max_row
+                source = data.get('curier', '')
+
+                # Color courier cell
+                if source == 'GLS':
+                    ws.cell(row=row_idx, column=4).fill = gls_fill
+                    ws.cell(row=row_idx, column=4).font = Font(color="FFFFFF")
+                elif source == 'Sameday':
+                    ws.cell(row=row_idx, column=4).fill = sameday_fill
+                    ws.cell(row=row_idx, column=4).font = Font(color="FFFFFF")
+                elif source == 'Netopia':
+                    ws.cell(row=row_idx, column=4).fill = netopia_fill
+                elif source == 'eMag':
+                    ws.cell(row=row_idx, column=4).fill = emag_fill
+
+                # Color error cell
+                if data.get('erori') == 'DA':
+                    ws.cell(row=row_idx, column=8).fill = error_fill
+                    ws.cell(row=row_idx, column=8).font = Font(color="FFFFFF")
+
+            # Adjust column widths
+            column_widths = [12, 22, 25, 12, 15, 15, 12, 8, 15, 35]
+            for col_idx, width in enumerate(column_widths, 1):
+                ws.column_dimensions[chr(64 + col_idx)].width = width
 
             wb.save(buffer)
             buffer.seek(0)
 
-            timestamp = datetime.now().strftime("%Y%m%d")
             st.download_button(
-                label="Descarca Raport Excel",
+                label="Descarca opuri_export.xlsx",
                 data=buffer,
                 file_name=f"opuri_export_{start_date}_{end_date}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
+                use_container_width=True,
+                type="primary"
             )
 
         with col2:
-            st.info("Raportul contine tranzactiile bancare din perioada selectata. Pentru matching complet cu facturi, proceseaza mai intai datele din pagina 'Procesare Facturi'.")
+            st.markdown("""
+            <div class="info-card">
+                <p><strong>Acest raport contine:</strong></p>
+                <ul>
+                    <li>Tranzactii bancare din MT940</li>
+                    <li>Matching automat cu facturi Oblio</li>
+                    <li>Cautare in Oblio API pentru AWB-uri fara factura</li>
+                    <li>Colorare pe surse (GLS, Sameday, Netopia, eMag)</li>
+                    <li>Marcare erori pentru tranzactii nepotrivite</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
 
     except Exception as e:
         st.error(f"Eroare la incarcarea datelor: {str(e)}")
