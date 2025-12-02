@@ -57,7 +57,7 @@ def import_mt940_to_supabase(
                 'source': source,
                 'batch_id': batch_id,
                 'details': details,
-                'file_name': file_names[0] if file_names else None
+                'file_name': file_names[0] if file_names and len(file_names) > 0 else None
             }
 
             try:
