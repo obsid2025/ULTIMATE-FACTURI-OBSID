@@ -19,6 +19,17 @@ from utils.auth import login_form, logout
 from utils.mt940_parser import extrage_referinte_op_din_mt940_folder, get_sursa_incasare
 from utils.processors import proceseaza_borderouri_gls, proceseaza_borderouri_sameday, proceseaza_netopia
 from utils.export import genereaza_export_excel
+from utils.data_sync import (
+    import_mt940_to_supabase,
+    sync_oblio_invoices,
+    get_profit_data,
+    get_dashboard_stats,
+    get_recent_sync_logs
+)
+from utils.supabase_client import test_connection as test_supabase
+from utils.oblio_api import test_connection as test_oblio
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Page config
 st.set_page_config(
@@ -656,8 +667,10 @@ def main():
         # Navigation items without emojis
         nav_items = [
             ("Dashboard", "Vedere generala"),
+            ("Profit Dashboard", "Profit zilnic/lunar/anual"),
             ("Procesare Facturi", "Incarca si proceseaza"),
             ("Incasari MT940", "Extrase bancare"),
+            ("Sincronizare Date", "Oblio si MT940"),
             ("Setari", "Configurare")
         ]
 
@@ -688,10 +701,14 @@ def main():
 
     if page == "Dashboard":
         show_dashboard()
+    elif page == "Profit Dashboard":
+        show_profit_dashboard()
     elif page == "Procesare Facturi":
         show_procesare()
     elif page == "Incasari MT940":
         show_incasari()
+    elif page == "Sincronizare Date":
+        show_data_sync()
     elif page == "Setari":
         show_setari()
 
@@ -1095,6 +1112,336 @@ def show_setari():
     - Grupare facturi pe OP-uri bancare
     - Export Excel cu toate datele procesate
     """)
+
+
+def show_profit_dashboard():
+    """Pagina cu profit pe zile/luni/ani."""
+    st.markdown("""
+    <div class="page-header">
+        <h1 class="page-title">Profit Dashboard</h1>
+        <p class="page-subtitle">Vizualizare profit pe perioade de timp</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Period selector
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        period = st.selectbox("Perioada", ["Lunar", "Zilnic", "Anual"], key="profit_period")
+    with col2:
+        from datetime import date, timedelta
+        default_start = date.today() - timedelta(days=365)
+        start_date = st.date_input("De la", value=default_start, key="profit_start")
+    with col3:
+        end_date = st.date_input("Pana la", value=date.today(), key="profit_end")
+
+    # Map period to group_by
+    group_map = {"Zilnic": "day", "Lunar": "month", "Anual": "year"}
+    group_by = group_map[period]
+
+    try:
+        # Get profit data from Supabase
+        profit_data = get_profit_data(start_date, end_date, group_by)
+
+        if not profit_data:
+            st.info("Nu exista date in baza de date. Sincronizeaza datele MT940 din pagina 'Sincronizare Date'.")
+            return
+
+        # Prepare data for chart
+        dates = [d['date'] for d in profit_data]
+        totals = [d['total'] for d in profit_data]
+
+        # Summary metrics
+        total_sum = sum(totals)
+        avg_sum = total_sum / len(totals) if totals else 0
+        max_sum = max(totals) if totals else 0
+        min_sum = min(totals) if totals else 0
+
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Total Perioada</div>
+                <div class="metric-value gold">{total_sum:,.2f} RON</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Medie {period.lower()}</div>
+                <div class="metric-value">{avg_sum:,.2f} RON</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Maxim</div>
+                <div class="metric-value">{max_sum:,.2f} RON</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col4:
+            st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Minim</div>
+                <div class="metric-value">{min_sum:,.2f} RON</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # Main chart
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Evolutie Profit</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=dates,
+            y=totals,
+            marker_color='#3fb950',
+            name='Profit'
+        ))
+        fig.update_layout(
+            plot_bgcolor='#0d1117',
+            paper_bgcolor='#0d1117',
+            font=dict(family='VCR OSD Mono, monospace', color='#8b949e'),
+            xaxis=dict(
+                gridcolor='#30363d',
+                tickfont=dict(color='#8b949e')
+            ),
+            yaxis=dict(
+                gridcolor='#30363d',
+                tickfont=dict(color='#8b949e'),
+                title='RON'
+            ),
+            margin=dict(l=40, r=40, t=40, b=40),
+            showlegend=False
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Breakdown by source
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Distributie pe Surse</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Aggregate by source
+        source_totals = {}
+        for d in profit_data:
+            for source, amount in d.get('by_source', {}).items():
+                source_totals[source] = source_totals.get(source, 0) + amount
+
+        if source_totals:
+            col1, col2 = st.columns([1, 1])
+
+            with col1:
+                # Pie chart
+                fig_pie = go.Figure(data=[go.Pie(
+                    labels=list(source_totals.keys()),
+                    values=list(source_totals.values()),
+                    hole=0.4,
+                    marker=dict(colors=['#3fb950', '#58a6ff', '#8b949e', '#f85149', '#c9d1d9'])
+                )])
+                fig_pie.update_layout(
+                    plot_bgcolor='#0d1117',
+                    paper_bgcolor='#0d1117',
+                    font=dict(family='VCR OSD Mono, monospace', color='#8b949e'),
+                    margin=dict(l=20, r=20, t=20, b=20),
+                    showlegend=True,
+                    legend=dict(font=dict(color='#8b949e'))
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
+
+            with col2:
+                # Table
+                source_data = [
+                    {"Sursa": k, "Total": f"{v:,.2f} RON", "Procent": f"{v/total_sum*100:.1f}%"}
+                    for k, v in sorted(source_totals.items(), key=lambda x: x[1], reverse=True)
+                ]
+                st.dataframe(pd.DataFrame(source_data), use_container_width=True, hide_index=True)
+
+    except Exception as e:
+        st.error(f"Eroare la incarcarea datelor: {str(e)}")
+        st.info("Asigura-te ca conexiunea la Supabase este configurata corect.")
+
+
+def show_data_sync():
+    """Pagina pentru sincronizare date cu Supabase."""
+    st.markdown("""
+    <div class="page-header">
+        <h1 class="page-title">Sincronizare Date</h1>
+        <p class="page-subtitle">Import MT940 si sincronizare Oblio cu Supabase</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Connection status
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Status Conexiuni</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        supabase_ok = test_supabase()
+        if supabase_ok:
+            st.success("Supabase: Conectat")
+        else:
+            st.error("Supabase: Deconectat")
+
+    with col2:
+        oblio_ok = test_oblio()
+        if oblio_ok:
+            st.success("Oblio API: Conectat")
+        else:
+            st.error("Oblio API: Deconectat")
+
+    st.markdown("---")
+
+    # Two columns for sync options
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Import MT940</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.info("Importa tranzactiile bancare din fisierele MT940 in Supabase. Duplicatele sunt ignorate automat.")
+
+        mt940_folder = st.text_input(
+            "Folder MT940",
+            value="",
+            placeholder="C:\\path\\to\\mt940\\files",
+            key="sync_mt940_folder"
+        )
+
+        mt940_files_upload = st.file_uploader(
+            "Sau incarca fisiere MT940",
+            type=['txt'],
+            accept_multiple_files=True,
+            key="sync_mt940_files"
+        )
+
+        if st.button("Import MT940", key="btn_import_mt940", use_container_width=True, disabled=not supabase_ok):
+            if mt940_files_upload:
+                with st.spinner("Se importa tranzactiile..."):
+                    try:
+                        with tempfile.TemporaryDirectory() as tmpdir:
+                            file_names = []
+                            for mt_file in mt940_files_upload:
+                                file_path = os.path.join(tmpdir, mt_file.name)
+                                with open(file_path, 'wb') as f:
+                                    f.write(mt_file.getbuffer())
+                                file_names.append(mt_file.name)
+
+                            stats = import_mt940_to_supabase(tmpdir, file_names)
+
+                        st.success(f"Import finalizat!")
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            st.metric("Procesate", stats['processed'])
+                        with col_b:
+                            st.metric("Inserate", stats['inserted'])
+                        with col_c:
+                            st.metric("Ignorate (duplicate)", stats['skipped'])
+
+                        if stats['errors']:
+                            with st.expander(f"Erori ({len(stats['errors'])})"):
+                                for err in stats['errors'][:10]:
+                                    st.warning(err)
+                    except Exception as e:
+                        st.error(f"Eroare la import: {str(e)}")
+            elif mt940_folder:
+                with st.spinner("Se importa tranzactiile..."):
+                    try:
+                        stats = import_mt940_to_supabase(mt940_folder)
+                        st.success(f"Import finalizat!")
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            st.metric("Procesate", stats['processed'])
+                        with col_b:
+                            st.metric("Inserate", stats['inserted'])
+                        with col_c:
+                            st.metric("Ignorate (duplicate)", stats['skipped'])
+                    except Exception as e:
+                        st.error(f"Eroare la import: {str(e)}")
+            else:
+                st.warning("Selecteaza un folder sau incarca fisiere MT940")
+
+    with col2:
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Sincronizare Oblio</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.info("Sincronizeaza facturile din Oblio API in Supabase. Facturile existente sunt actualizate automat.")
+
+        from datetime import date, timedelta
+        default_start = date.today() - timedelta(days=30)
+
+        col_date1, col_date2 = st.columns(2)
+        with col_date1:
+            oblio_start = st.date_input("De la data", value=default_start, key="oblio_start")
+        with col_date2:
+            oblio_end = st.date_input("Pana la data", value=date.today(), key="oblio_end")
+
+        if st.button("Sincronizeaza Oblio", key="btn_sync_oblio", use_container_width=True, disabled=not (supabase_ok and oblio_ok)):
+            with st.spinner("Se sincronizeaza facturile..."):
+                try:
+                    stats = sync_oblio_invoices(oblio_start, oblio_end)
+                    st.success(f"Sincronizare finalizata!")
+                    col_a, col_b, col_c = st.columns(3)
+                    with col_a:
+                        st.metric("Procesate", stats['processed'])
+                    with col_b:
+                        st.metric("Inserate/Actualizate", stats['inserted'])
+                    with col_c:
+                        st.metric("Erori", stats['failed'])
+
+                    if stats['errors']:
+                        with st.expander(f"Erori ({len(stats['errors'])})"):
+                            for err in stats['errors'][:10]:
+                                st.warning(err)
+                except Exception as e:
+                    st.error(f"Eroare la sincronizare: {str(e)}")
+
+    # Sync logs
+    st.markdown("---")
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Istoric Sincronizari</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    try:
+        logs = get_recent_sync_logs(10)
+        if logs:
+            log_data = []
+            for log in logs:
+                log_data.append({
+                    'Data': log.get('started_at', '-')[:19].replace('T', ' ') if log.get('started_at') else '-',
+                    'Tip': log.get('sync_type', '-'),
+                    'Status': log.get('status', '-'),
+                    'Procesate': log.get('records_processed', 0),
+                    'Inserate': log.get('records_inserted', 0),
+                    'Ignorate': log.get('records_skipped', 0)
+                })
+            st.dataframe(pd.DataFrame(log_data), use_container_width=True, hide_index=True)
+        else:
+            st.info("Nu exista sincronizari anterioare.")
+    except Exception as e:
+        st.warning(f"Nu s-a putut incarca istoricul: {str(e)}")
 
 
 if __name__ == "__main__":
