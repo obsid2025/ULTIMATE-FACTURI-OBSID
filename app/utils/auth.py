@@ -9,6 +9,15 @@ import secrets
 from typing import Optional, Dict
 
 
+def clean_env_value(value: str) -> str:
+    """Clean environment variable value from escape artifacts."""
+    if not value:
+        return value
+    # Remove trailing backslashes added by shell escaping
+    cleaned = value.rstrip('\\')
+    return cleaned
+
+
 def hash_password(password: str) -> str:
     """Hash password using SHA-256."""
     return hashlib.sha256(password.encode()).hexdigest()
@@ -25,10 +34,10 @@ def get_credentials() -> Dict:
         'usernames': {}
     }
 
-    # Admin user from env
-    admin_user = os.getenv('ADMIN_USERNAME', 'admin')
-    admin_pass = os.getenv('ADMIN_PASSWORD', 'admin123')
-    admin_name = os.getenv('ADMIN_NAME', 'Administrator')
+    # Admin user from env (clean values from shell escape artifacts)
+    admin_user = clean_env_value(os.getenv('ADMIN_USERNAME', 'admin'))
+    admin_pass = clean_env_value(os.getenv('ADMIN_PASSWORD', 'admin123'))
+    admin_name = clean_env_value(os.getenv('ADMIN_NAME', 'Administrator'))
 
     credentials['usernames'][admin_user] = {
         'name': admin_name,
