@@ -672,16 +672,15 @@ def main():
         st.session_state.username = None
         st.session_state.name = None
 
-    # Get page from URL query params
-    url_page = st.query_params.get("page", None)
-
-    # Determine if user is authenticated
+    # Check authentication FIRST - block all access without login
     authenticated = is_authenticated()
 
-    # Pages available for unauthenticated users (visitors)
-    public_pages = ["Raport OP-uri"]
+    if not authenticated:
+        # Show login form - no access without authentication
+        login_form()
+        return
 
-    # All pages for authenticated users
+    # All pages (only accessible after authentication)
     all_pages = [
         "Dashboard",
         "Profit Dashboard",
@@ -692,29 +691,20 @@ def main():
         "Setari"
     ]
 
-    # Determine available pages based on auth status
-    available_pages = all_pages if authenticated else public_pages
+    # Get page from URL query params
+    url_page = st.query_params.get("page", None)
 
     # Initialize or sync current page from URL
     if url_page:
         page_from_url = get_page_from_slug(url_page)
-        # Check if user has access to this page
-        if page_from_url in available_pages:
+        if page_from_url in all_pages:
             st.session_state.current_page = page_from_url
         else:
-            # Redirect to default allowed page
-            st.session_state.current_page = "Raport OP-uri"
-            st.query_params["page"] = "raport-opuri"
+            st.session_state.current_page = "Dashboard"
+            st.query_params["page"] = "dashboard"
     elif 'current_page' not in st.session_state:
-        # Default page based on auth status
-        default_page = "Dashboard" if authenticated else "Raport OP-uri"
-        st.session_state.current_page = default_page
-        st.query_params["page"] = get_page_slug(default_page)
-
-    # Ensure current page is in available pages
-    if st.session_state.current_page not in available_pages:
-        st.session_state.current_page = "Raport OP-uri"
-        st.query_params["page"] = "raport-opuri"
+        st.session_state.current_page = "Dashboard"
+        st.query_params["page"] = "dashboard"
 
     # Sidebar - always visible
     with st.sidebar:
@@ -731,10 +721,10 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-        # User profile - show visitor or logged in user
+        # User profile - authenticated user
         user_name = get_user_name()
-        user_initial = user_name[0].upper() if user_name else 'V'
-        user_role = "Administrator" if authenticated else "Vizualizare"
+        user_initial = user_name[0].upper() if user_name else 'A'
+        user_role = "Administrator"
         st.markdown(f"""
         <div class="user-profile">
             <div class="user-avatar">{user_initial}</div>
@@ -749,8 +739,8 @@ def main():
         st.markdown('<div class="nav-section">', unsafe_allow_html=True)
         st.markdown('<div class="nav-label">Meniu Principal</div>', unsafe_allow_html=True)
 
-        # Navigation items with descriptions (for all pages)
-        nav_items_full = [
+        # Navigation items
+        nav_items = [
             ("Dashboard", "Vedere generala"),
             ("Profit Dashboard", "Profit zilnic/lunar/anual"),
             ("Raport OP-uri", "Export contabilitate"),
@@ -759,9 +749,6 @@ def main():
             ("Sincronizare Date", "Oblio si MT940"),
             ("Setari", "Configurare")
         ]
-
-        # Filter navigation items based on auth status
-        nav_items = [(name, desc) for name, desc in nav_items_full if name in available_pages]
 
         for page_name, _ in nav_items:
             is_active = st.session_state.current_page == page_name
@@ -778,23 +765,12 @@ def main():
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Login/Logout at bottom
+        # Logout at bottom
         st.markdown("---")
         st.markdown('<div class="logout-section">', unsafe_allow_html=True)
-        if authenticated:
-            if st.button("Deconectare", key="logout_btn", use_container_width=True):
-                logout()
-        else:
-            if st.button("Autentificare", key="login_btn", use_container_width=True):
-                st.session_state.show_login = True
-                st.rerun()
+        if st.button("Deconectare", key="logout_btn", use_container_width=True):
+            logout()
         st.markdown('</div>', unsafe_allow_html=True)
-
-    # Show login form if requested
-    if st.session_state.get('show_login', False) and not authenticated:
-        login_form()
-        st.session_state.show_login = False
-        return
 
     # Main content
     page = st.session_state.get('current_page', 'Raport OP-uri')
