@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  ultimate-facturi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ultimate-facturi-obsid
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      # Authentication credentials
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - ADMIN_NAME=${ADMIN_NAME:-Administrator}
+      - ADDITIONAL_USERS=${ADDITIONAL_USERS:-}
+      - COOKIE_KEY=${COOKIE_KEY:-your_secret_key_here}
+      - COOKIE_EXPIRY_DAYS=${COOKIE_EXPIRY_DAYS:-30}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./exports:/app/exports
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "coolify.managed=true"
