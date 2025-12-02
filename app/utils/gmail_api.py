@@ -84,10 +84,11 @@ def search_netopia_emails(
     Returns:
         Lista de dict-uri cu informatii despre email-uri
     """
-    # Query pentru email-uri Netopia cu BatchId
-    # Email-urile vin de la finance@netopia.ro sau noreply@netopia-payments.com
+    # Query pentru email-uri Netopia cu rapoarte de decontare
+    # Email-urile vin de la: NETOPIA Payments <contact@netopia.ro>
+    # Subject contine: "Detalii decontare" si "BatchId"
     after_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y/%m/%d')
-    query = f'(from:netopia.ro OR from:netopia-payments.com) subject:decontare after:{after_date}'
+    query = f'from:contact@netopia.ro subject:"Detalii decontare" subject:BatchId after:{after_date}'
 
     results = service.users().messages().list(
         userId='me',
