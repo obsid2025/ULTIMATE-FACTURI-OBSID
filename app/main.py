@@ -28,235 +28,614 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for dark theme
+# Premium CSS - Luxury Fintech Aesthetic
 st.markdown("""
 <style>
-    /* Main container */
+    /* Import premium fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    /* CSS Variables */
+    :root {
+        --bg-primary: #0a0a0b;
+        --bg-secondary: #111113;
+        --bg-tertiary: #18181b;
+        --bg-card: #1c1c1f;
+        --border-subtle: #27272a;
+        --border-accent: #3f3f46;
+        --text-primary: #fafafa;
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
+        --accent-gold: #d4a853;
+        --accent-gold-light: #e8c97a;
+        --accent-gold-dark: #b8923f;
+        --accent-emerald: #34d399;
+        --accent-rose: #f43f5e;
+        --accent-blue: #60a5fa;
+        --shadow-gold: rgba(212, 168, 83, 0.15);
+        --shadow-dark: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Global resets */
     .main {
-        background-color: #0f172a;
+        background-color: var(--bg-primary);
+        background-image:
+            radial-gradient(ellipse at 20% 0%, rgba(212, 168, 83, 0.03) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 100%, rgba(212, 168, 83, 0.02) 0%, transparent 50%);
     }
 
-    /* Sidebar */
+    .stApp {
+        background-color: var(--bg-primary);
+    }
+
+    /* Sidebar styling */
     [data-testid="stSidebar"] {
-        background-color: #1e293b;
+        background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        border-right: 1px solid var(--border-subtle);
     }
 
-    /* Headers */
-    h1, h2, h3 {
-        color: #e2e8f0 !important;
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 0;
     }
 
-    /* Logo container */
-    .logo-container {
+    /* Typography */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Playfair Display', Georgia, serif !important;
+        color: var(--text-primary) !important;
+        letter-spacing: -0.02em;
+    }
+
+    h1 {
+        font-size: 2.5rem !important;
+        font-weight: 600 !important;
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-gold) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem !important;
+    }
+
+    h2 {
+        font-size: 1.5rem !important;
+        font-weight: 500 !important;
+        color: var(--text-primary) !important;
+    }
+
+    h3 {
+        font-size: 1.125rem !important;
+        font-weight: 500 !important;
+        color: var(--text-secondary) !important;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-family: 'DM Sans', sans-serif !important;
+    }
+
+    p, span, div, label {
+        font-family: 'DM Sans', sans-serif;
+        color: var(--text-secondary);
+    }
+
+    /* Brand header in sidebar */
+    .brand-header {
+        padding: 1.5rem 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+        margin-bottom: 1rem;
+    }
+
+    .brand-logo {
         display: flex;
         align-items: center;
         gap: 1rem;
-        padding: 1rem 0;
-        margin-bottom: 1rem;
-        border-bottom: 1px solid #334155;
     }
 
-    .logo-container img {
-        width: 50px;
-        height: auto;
+    .brand-logo img {
+        width: 48px;
+        height: 48px;
+        filter: drop-shadow(0 0 20px var(--shadow-gold));
     }
 
-    .logo-title {
-        color: #e2e8f0;
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0;
+    .brand-text {
+        display: flex;
+        flex-direction: column;
     }
 
-    .logo-subtitle {
-        color: #94a3b8;
+    .brand-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.375rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+
+    .brand-tagline {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.75rem;
+        color: var(--accent-gold);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-weight: 500;
+    }
+
+    /* User profile section */
+    .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 10px;
+        margin: 0 0.5rem 1rem 0.5rem;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Playfair Display', serif;
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--bg-primary);
+    }
+
+    .user-details {
+        flex: 1;
+    }
+
+    .user-name {
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 600;
         font-size: 0.875rem;
-        margin: 0;
+        color: var(--text-primary);
+        line-height: 1.3;
     }
 
-    /* Cards */
-    .metric-card {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 1px solid #334155;
-        margin-bottom: 1rem;
-    }
-
-    .metric-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #6366f1;
-    }
-
-    .metric-label {
-        color: #94a3b8;
-        font-size: 0.875rem;
+    .user-role {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.6875rem;
+        color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
 
-    /* Status badges */
-    .badge-success {
-        background-color: #059669;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
+    /* Navigation section */
+    .nav-section {
+        padding: 0 0.5rem;
     }
 
-    .badge-warning {
-        background-color: #d97706;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    .badge-error {
-        background-color: #dc2626;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    /* Upload area */
-    [data-testid="stFileUploader"] {
-        background-color: #1e293b;
-        border: 2px dashed #334155;
-        border-radius: 12px;
-        padding: 1rem;
-    }
-
-    [data-testid="stFileUploader"]:hover {
-        border-color: #6366f1;
-    }
-
-    /* Buttons */
-    .stButton > button {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
+    .nav-label {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.6875rem;
         font-weight: 600;
-        transition: all 0.3s ease;
-    }
-
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
-    }
-
-    /* Navigation buttons */
-    .nav-button {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        width: 100%;
-        padding: 0.875rem 1rem;
-        margin-bottom: 0.5rem;
-        background-color: transparent;
-        border: none;
-        border-radius: 8px;
-        color: #94a3b8;
-        font-size: 0.95rem;
-        font-weight: 500;
-        text-align: left;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .nav-button:hover {
-        background-color: #334155;
-        color: #e2e8f0;
-    }
-
-    .nav-button.active {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-    }
-
-    .nav-button .nav-icon {
-        font-size: 1.25rem;
-        width: 24px;
-        text-align: center;
-    }
-
-    /* Sidebar navigation section */
-    [data-testid="stSidebar"] .stButton > button {
-        background: transparent;
-        color: #94a3b8;
-        border: 1px solid transparent;
-        text-align: left;
-        justify-content: flex-start;
-        padding: 0.875rem 1rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.5rem 0.75rem;
         margin-bottom: 0.25rem;
     }
 
+    /* Navigation buttons - refined */
+    [data-testid="stSidebar"] .stButton > button {
+        background: transparent;
+        color: var(--text-secondary);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 2px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        text-align: left;
+        justify-content: flex-start;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
     [data-testid="stSidebar"] .stButton > button:hover {
-        background-color: #334155;
-        color: #e2e8f0;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
         transform: none;
         box-shadow: none;
     }
 
-    /* Active nav button in sidebar */
+    [data-testid="stSidebar"] .stButton > button:active {
+        background: var(--bg-card);
+    }
+
+    /* Active navigation state */
     [data-testid="stSidebar"] .nav-active > button {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
-        color: white !important;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        background: linear-gradient(90deg, var(--bg-card) 0%, transparent 100%) !important;
+        color: var(--accent-gold) !important;
+        border-left: 2px solid var(--accent-gold) !important;
+        border-radius: 0 8px 8px 0 !important;
     }
 
-    /* Tables */
-    .dataframe {
-        background-color: #1e293b !important;
+    /* Logout button special styling */
+    .logout-section {
+        margin-top: auto;
+        padding: 1rem 0.5rem;
+        border-top: 1px solid var(--border-subtle);
     }
 
-    /* Info boxes */
-    .stAlert {
-        background-color: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 8px;
+    .logout-section .stButton > button {
+        background: transparent !important;
+        border: 1px solid var(--border-subtle) !important;
+        color: var(--text-muted) !important;
     }
 
-    /* User info */
-    .user-info {
+    .logout-section .stButton > button:hover {
+        border-color: var(--accent-rose) !important;
+        color: var(--accent-rose) !important;
+        background: rgba(244, 63, 94, 0.1) !important;
+    }
+
+    /* Main content area */
+    .main .block-container {
+        padding: 2rem 3rem;
+        max-width: 1400px;
+    }
+
+    /* Page header */
+    .page-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .page-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    /* Metric cards - premium style */
+    .metric-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent-gold) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .metric-card:hover {
+        border-color: var(--border-accent);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px var(--shadow-dark);
+    }
+
+    .metric-card:hover::before {
+        opacity: 1;
+    }
+
+    .metric-label {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.75rem;
+    }
+
+    .metric-value {
+        font-family: 'Playfair Display', serif;
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-value.gold {
+        color: var(--accent-gold);
+    }
+
+    .metric-change {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        color: var(--accent-emerald);
+    }
+
+    .metric-change.negative {
+        color: var(--accent-rose);
+    }
+
+    /* Section headers */
+    .section-header {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background-color: #334155;
-        border-radius: 8px;
-        margin-bottom: 1rem;
+        gap: 0.75rem;
+        margin: 2rem 0 1rem 0;
     }
 
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-        border-radius: 50%;
+    .section-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .section-line {
+        flex: 1;
+        height: 1px;
+        background: var(--border-subtle);
+    }
+
+    /* File upload areas */
+    [data-testid="stFileUploader"] {
+        background: var(--bg-secondary);
+        border: 1px dashed var(--border-accent);
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
+    }
+
+    [data-testid="stFileUploader"]:hover {
+        border-color: var(--accent-gold);
+        background: var(--bg-tertiary);
+    }
+
+    [data-testid="stFileUploader"] label {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 500 !important;
+        color: var(--text-secondary) !important;
+    }
+
+    /* Primary action buttons */
+    .stButton > button {
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        letter-spacing: 0.02em;
+        background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+        color: var(--bg-primary);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px var(--shadow-gold);
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px var(--shadow-gold);
+        background: linear-gradient(135deg, var(--accent-gold-light) 0%, var(--accent-gold) 100%);
+    }
+
+    .stButton > button:active {
+        transform: translateY(0);
+    }
+
+    .stButton > button:disabled {
+        background: var(--bg-tertiary);
+        color: var(--text-muted);
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+
+    /* Download button special */
+    .stDownloadButton > button {
+        background: transparent;
+        border: 1px solid var(--accent-gold);
+        color: var(--accent-gold);
+        box-shadow: none;
+    }
+
+    .stDownloadButton > button:hover {
+        background: var(--accent-gold);
+        color: var(--bg-primary);
+    }
+
+    /* Data tables */
+    .stDataFrame {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .stDataFrame [data-testid="stDataFrameResizable"] {
+        background: var(--bg-secondary);
+    }
+
+    /* Alerts and messages */
+    .stAlert {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 10px;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    .stAlert [data-testid="stMarkdownContainer"] p {
+        color: var(--text-secondary);
+    }
+
+    /* Success state */
+    .stSuccess {
+        background: rgba(52, 211, 153, 0.1);
+        border-color: var(--accent-emerald);
+    }
+
+    /* Warning state */
+    .stWarning {
+        background: rgba(212, 168, 83, 0.1);
+        border-color: var(--accent-gold);
+    }
+
+    /* Error state */
+    .stError {
+        background: rgba(244, 63, 94, 0.1);
+        border-color: var(--accent-rose);
+    }
+
+    /* Progress bar */
+    .stProgress > div > div {
+        background: linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%);
+        border-radius: 4px;
+    }
+
+    .stProgress > div {
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+    }
+
+    /* Expander */
+    .streamlit-expanderHeader {
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+    }
+
+    .streamlit-expanderHeader:hover {
+        color: var(--text-primary);
+        border-color: var(--border-accent);
+    }
+
+    /* Multiselect */
+    .stMultiSelect [data-baseweb="select"] {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+    }
+
+    .stMultiSelect [data-baseweb="select"]:hover {
+        border-color: var(--accent-gold);
+    }
+
+    /* Metrics from Streamlit */
+    [data-testid="stMetricValue"] {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.75rem;
+        color: var(--text-primary);
+    }
+
+    [data-testid="stMetricLabel"] {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Info box styling */
+    .info-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 1.5rem;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    .info-box strong {
+        color: var(--text-primary);
+    }
+
+    /* Dividers */
+    hr {
+        border: none;
+        height: 1px;
+        background: var(--border-subtle);
+        margin: 1.5rem 0;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--border-accent);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
+
+    /* Quick action cards */
+    .action-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .action-card:hover {
+        border-color: var(--accent-gold);
+        background: var(--bg-tertiary);
+    }
+
+    .action-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 1rem auto;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
+    }
+
+    .action-title {
+        font-family: 'DM Sans', sans-serif;
         font-weight: 600;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
     }
 
-    /* Divider */
-    hr {
-        border-color: #334155;
+    .action-desc {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.8125rem;
+        color: var(--text-muted);
     }
 
-    /* Progress */
-    .stProgress > div > div {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    }
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -269,67 +648,71 @@ def main():
 
     # Sidebar
     with st.sidebar:
-        # Logo and title
+        # Brand header
         st.markdown("""
-        <div class="logo-container">
-            <img src="https://gomagcdn.ro/domains3/obsid.ro/files/company/parfumuri-arabesti8220.svg" alt="OBSID">
-            <div>
-                <p class="logo-title">Ultimate Facturi</p>
-                <p class="logo-subtitle">Dashboard OBSID</p>
+        <div class="brand-header">
+            <div class="brand-logo">
+                <img src="https://gomagcdn.ro/domains3/obsid.ro/files/company/parfumuri-arabesti8220.svg" alt="OBSID">
+                <div class="brand-text">
+                    <span class="brand-name">Ultimate Facturi</span>
+                    <span class="brand-tagline">OBSID Dashboard</span>
+                </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # User info
+        # User profile
         user_name = st.session_state.get('name', 'User')
         user_initial = user_name[0].upper() if user_name else 'U'
         st.markdown(f"""
-        <div class="user-info">
+        <div class="user-profile">
             <div class="user-avatar">{user_initial}</div>
-            <span style="color: #e2e8f0;">{user_name}</span>
+            <div class="user-details">
+                <div class="user-name">{user_name}</div>
+                <div class="user-role">Administrator</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Logout button
-        if st.button("Deconectare", use_container_width=True):
-            logout()
+        # Navigation
+        st.markdown('<div class="nav-section">', unsafe_allow_html=True)
+        st.markdown('<div class="nav-label">Meniu Principal</div>', unsafe_allow_html=True)
 
-        st.markdown("---")
-
-        # Navigation with buttons
-        st.markdown("### Navigare")
-
-        # Initialize current page in session state
+        # Initialize current page
         if 'current_page' not in st.session_state:
             st.session_state.current_page = "Dashboard"
 
-        # Navigation buttons with icons
+        # Navigation items without emojis
         nav_items = [
-            ("Dashboard", "📊"),
-            ("Procesare Facturi", "📄"),
-            ("Incasari MT940", "🏦"),
-            ("Setari", "⚙️")
+            ("Dashboard", "Vedere generala"),
+            ("Procesare Facturi", "Incarca si proceseaza"),
+            ("Incasari MT940", "Extrase bancare"),
+            ("Setari", "Configurare")
         ]
 
-        for page_name, icon in nav_items:
+        for page_name, _ in nav_items:
             is_active = st.session_state.current_page == page_name
 
-            # Apply active class styling
             if is_active:
                 st.markdown('<div class="nav-active">', unsafe_allow_html=True)
 
-            if st.button(
-                f"{icon}  {page_name}",
-                key=f"nav_{page_name}",
-                use_container_width=True
-            ):
+            if st.button(page_name, key=f"nav_{page_name}", use_container_width=True):
                 st.session_state.current_page = page_name
                 st.rerun()
 
             if is_active:
                 st.markdown('</div>', unsafe_allow_html=True)
 
-    # Main content based on selected page
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Logout at bottom
+        st.markdown("---")
+        st.markdown('<div class="logout-section">', unsafe_allow_html=True)
+        if st.button("Deconectare", key="logout_btn", use_container_width=True):
+            logout()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Main content
     page = st.session_state.get('current_page', 'Dashboard')
 
     if page == "Dashboard":
@@ -344,71 +727,96 @@ def main():
 
 def show_dashboard():
     """Pagina principala cu sumar."""
-    st.markdown("# Dashboard")
-    st.markdown("Bine ai venit in panoul de control Ultimate Facturi OBSID")
+    # Page header
+    st.markdown("""
+    <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Vedere generala asupra procesarii facturilor si incasarilor</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Metrics
+    # Get stored data
+    incasari = st.session_state.get('incasari_mt940', [])
+    rezultate_gls = st.session_state.get('rezultate_gls', [])
+    rezultate_sameday = st.session_state.get('rezultate_sameday', [])
+
+    total_facturi = len(rezultate_gls) + len(rezultate_sameday)
+    total_incasari = len(incasari)
+    total_suma = sum(i[1] for i in incasari) if incasari else 0
+
+    # Metrics row
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-value">0</div>
             <div class="metric-label">Facturi Procesate</div>
+            <div class="metric-value">{total_facturi}</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-value">0</div>
             <div class="metric-label">Incasari MT940</div>
+            <div class="metric-value">{total_incasari}</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-value">0.00 RON</div>
             <div class="metric-label">Total Incasari</div>
+            <div class="metric-value gold">{total_suma:,.2f} RON</div>
         </div>
         """, unsafe_allow_html=True)
 
     with col4:
-        st.markdown("""
+        erori = len(st.session_state.get('erori', []))
+        st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-value">0</div>
             <div class="metric-label">Erori</div>
+            <div class="metric-value">{erori}</div>
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    # Section header
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Actiuni Rapide</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Quick actions
-    st.markdown("### Actiuni Rapide")
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        if st.button("Procesare Noua", use_container_width=True):
-            st.session_state['page'] = 'Procesare Facturi'
+        if st.button("Procesare Noua", use_container_width=True, key="dash_process"):
+            st.session_state.current_page = 'Procesare Facturi'
             st.rerun()
 
     with col2:
-        if st.button("Vizualizeaza Incasari", use_container_width=True):
-            st.session_state['page'] = 'Incasari MT940'
+        if st.button("Vizualizeaza Incasari", use_container_width=True, key="dash_incasari"):
+            st.session_state.current_page = 'Incasari MT940'
             st.rerun()
 
     with col3:
-        if st.button("Export Raport", use_container_width=True):
-            st.info("Incarca mai intai fisierele pentru procesare")
+        if st.button("Export Raport", use_container_width=True, key="dash_export"):
+            if not incasari:
+                st.warning("Incarca mai intai fisierele pentru procesare")
 
 
 def show_procesare():
     """Pagina de procesare facturi."""
-    st.markdown("# Procesare Facturi")
-    st.markdown("Incarca fisierele necesare pentru procesare")
+    st.markdown("""
+    <div class="page-header">
+        <h1 class="page-title">Procesare Facturi</h1>
+        <p class="page-subtitle">Incarca fisierele necesare pentru reconcilierea facturilor</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Initialize session state for uploaded files
+    # Initialize session state
     if 'uploaded_files' not in st.session_state:
         st.session_state.uploaded_files = {}
 
@@ -416,9 +824,13 @@ def show_procesare():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("### Fisiere Obligatorii")
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Fisiere Obligatorii</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        # Gomag
         gomag_file = st.file_uploader(
             "Fisier Gomag (XLSX)",
             type=['xlsx'],
@@ -426,7 +838,6 @@ def show_procesare():
             help="Exportul comenzilor din Gomag"
         )
 
-        # GLS
         gls_files = st.file_uploader(
             "Borderouri GLS (XLSX)",
             type=['xlsx'],
@@ -435,7 +846,6 @@ def show_procesare():
             help="Borderourile GLS cu colete"
         )
 
-        # Sameday
         sameday_files = st.file_uploader(
             "Borderouri Sameday (XLSX)",
             type=['xlsx'],
@@ -445,9 +855,13 @@ def show_procesare():
         )
 
     with col2:
-        st.markdown("### Extras Bancar MT940")
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Extras Bancar</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        # MT940
         mt940_files = st.file_uploader(
             "Fisiere MT940 (TXT)",
             type=['txt'],
@@ -456,9 +870,13 @@ def show_procesare():
             help="Extrasele bancare MT940 de la Banca Transilvania"
         )
 
-        st.markdown("### Fisiere Optionale")
+        st.markdown("""
+        <div class="section-header">
+            <span class="section-title">Fisiere Optionale</span>
+            <div class="section-line"></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        # Netopia
         netopia_files = st.file_uploader(
             "Fisiere Netopia (CSV)",
             type=['csv'],
@@ -467,7 +885,6 @@ def show_procesare():
             help="Exporturile tranzactii Netopia"
         )
 
-        # Oblio
         oblio_file = st.file_uploader(
             "Fisier Oblio (XLS/XLSX)",
             type=['xls', 'xlsx'],
@@ -494,9 +911,7 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_fil
     status = st.empty()
 
     try:
-        # Create temp directory
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Save uploaded files to temp directory
             status.text("Salvez fisierele temporar...")
             progress.progress(10)
 
@@ -527,7 +942,7 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_fil
                 with open(os.path.join(mt940_folder, mt_file.name), 'wb') as f:
                     f.write(mt_file.getbuffer())
 
-            # Netopia folder (optional)
+            # Netopia folder
             netopia_folder = os.path.join(tmpdir, "netopia")
             os.makedirs(netopia_folder, exist_ok=True)
             if netopia_files:
@@ -538,32 +953,27 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_fil
             progress.progress(30)
             status.text("Procesez incasarile MT940...")
 
-            # Parse MT940
             incasari_mt940 = extrage_referinte_op_din_mt940_folder(mt940_folder)
             st.session_state['incasari_mt940'] = incasari_mt940
 
             progress.progress(50)
             status.text("Procesez borderourile GLS...")
 
-            # Process GLS
             rezultate_gls, erori_gls = proceseaza_borderouri_gls(gls_folder, gomag_df.copy())
 
             progress.progress(65)
             status.text("Procesez borderourile Sameday...")
 
-            # Process Sameday
             rezultate_sameday, erori_sameday = proceseaza_borderouri_sameday(sameday_folder, gomag_df.copy())
 
             progress.progress(80)
             status.text("Procesez Netopia...")
 
-            # Process Netopia
             rezultate_netopia, erori_netopia = proceseaza_netopia(netopia_folder, gomag_df.copy())
 
             progress.progress(90)
             status.text("Generez raportul Excel...")
 
-            # Generate export
             excel_buffer = genereaza_export_excel(
                 rezultate_gls,
                 rezultate_sameday,
@@ -574,7 +984,6 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_fil
             progress.progress(100)
             status.text("Procesare finalizata!")
 
-            # Show results
             st.success("Procesare finalizata cu succes!")
 
             # Statistics
@@ -589,14 +998,14 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_fil
                 total_suma = sum(i[1] for i in incasari_mt940)
                 st.metric("Total Incasari", f"{total_suma:,.2f} RON")
 
-            # Show errors if any
+            # Errors
             all_errors = erori_gls + erori_sameday + erori_netopia
             if all_errors:
                 with st.expander(f"Erori ({len(all_errors)})", expanded=False):
                     for err in all_errors:
                         st.warning(err)
 
-            # Download button
+            # Download
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             st.download_button(
                 label="Descarca Raportul Excel",
@@ -606,10 +1015,10 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_fil
                 use_container_width=True
             )
 
-            # Store results in session
             st.session_state['rezultate_gls'] = rezultate_gls
             st.session_state['rezultate_sameday'] = rezultate_sameday
             st.session_state['rezultate_netopia'] = rezultate_netopia
+            st.session_state['erori'] = all_errors
 
     except Exception as e:
         st.error(f"Eroare la procesare: {str(e)}")
@@ -619,7 +1028,12 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_fil
 
 def show_incasari():
     """Pagina cu incasarile MT940."""
-    st.markdown("# Incasari MT940")
+    st.markdown("""
+    <div class="page-header">
+        <h1 class="page-title">Incasari MT940</h1>
+        <p class="page-subtitle">Vizualizare extrase bancare procesate</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     if 'incasari_mt940' not in st.session_state or not st.session_state['incasari_mt940']:
         st.info("Nu exista incasari procesate. Mergi la 'Procesare Facturi' pentru a incarca fisierele MT940.")
@@ -669,9 +1083,20 @@ def show_incasari():
 
 def show_setari():
     """Pagina de setari."""
-    st.markdown("# Setari")
+    st.markdown("""
+    <div class="page-header">
+        <h1 class="page-title">Setari</h1>
+        <p class="page-subtitle">Configurare si informatii despre aplicatie</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("### Informatii Aplicatie")
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Informatii Aplicatie</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
     st.info("""
     **Ultimate Facturi OBSID**
     Versiune: 1.0.0
@@ -683,7 +1108,13 @@ def show_setari():
     - Extrase bancare MT940 (Banca Transilvania)
     """)
 
-    st.markdown("### Despre")
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Despre</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
     st.markdown("""
     Aceasta aplicatie automatizeaza procesul de reconciliere a facturilor cu incasarile bancare.
 

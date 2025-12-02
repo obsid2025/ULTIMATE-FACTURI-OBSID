@@ -76,42 +76,168 @@ def login_form() -> Optional[str]:
 
     credentials = get_credentials()
 
-    # Custom CSS for login page
+    # Premium CSS for login page - Luxury Fintech style
     st.markdown("""
     <style>
-    .login-container {
-        max-width: 400px;
-        margin: 0 auto;
-        padding: 2rem;
-        background: #1e293b;
-        border-radius: 16px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+    :root {
+        --bg-primary: #0a0a0b;
+        --bg-secondary: #111113;
+        --bg-card: #1c1c1f;
+        --border-subtle: #27272a;
+        --border-accent: #3f3f46;
+        --text-primary: #fafafa;
+        --text-secondary: #a1a1aa;
+        --text-muted: #71717a;
+        --accent-gold: #d4a853;
+        --accent-gold-light: #e8c97a;
+        --accent-gold-dark: #b8923f;
+        --shadow-gold: rgba(212, 168, 83, 0.15);
     }
+
+    .stApp {
+        background-color: var(--bg-primary);
+        background-image:
+            radial-gradient(ellipse at 50% 0%, rgba(212, 168, 83, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 100%, rgba(212, 168, 83, 0.03) 0%, transparent 50%);
+    }
+
+    .login-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 420px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 16px;
+        padding: 3rem 2.5rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .login-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+    }
+
     .login-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
     }
+
     .login-logo {
-        width: 120px;
-        height: auto;
-        margin-bottom: 1rem;
+        width: 80px;
+        height: 80px;
+        margin-bottom: 1.5rem;
+        filter: drop-shadow(0 0 30px var(--shadow-gold));
     }
+
     .login-title {
-        color: #e2e8f0;
-        font-size: 1.5rem;
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 1.75rem;
         font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.02em;
+    }
+
+    .login-subtitle {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.75rem;
+        color: var(--accent-gold);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-weight: 500;
         margin: 0;
     }
-    .login-subtitle {
-        color: #94a3b8;
-        font-size: 0.875rem;
-        margin-top: 0.5rem;
+
+    /* Form styling */
+    [data-testid="stForm"] {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    .stTextInput > div > div > input {
+        font-family: 'DM Sans', sans-serif !important;
+        background: var(--bg-secondary) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: 8px !important;
+        color: var(--text-primary) !important;
+        padding: 0.875rem 1rem !important;
+        font-size: 0.9375rem !important;
+    }
+
+    .stTextInput > div > div > input:focus {
+        border-color: var(--accent-gold) !important;
+        box-shadow: 0 0 0 1px var(--accent-gold) !important;
+    }
+
+    .stTextInput > div > div > input::placeholder {
+        color: var(--text-muted) !important;
+    }
+
+    .stTextInput > label {
+        font-family: 'DM Sans', sans-serif !important;
+        font-size: 0.8125rem !important;
+        font-weight: 500 !important;
+        color: var(--text-secondary) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    /* Login button */
+    .stButton > button {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 600 !important;
+        font-size: 0.9375rem !important;
+        letter-spacing: 0.02em !important;
+        background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%) !important;
+        color: var(--bg-primary) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.875rem 1.5rem !important;
+        margin-top: 0.5rem !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 12px var(--shadow-gold) !important;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px var(--shadow-gold) !important;
+        background: linear-gradient(135deg, var(--accent-gold-light) 0%, var(--accent-gold) 100%) !important;
+    }
+
+    /* Hide Streamlit elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* Alert styling */
+    .stAlert {
+        background: rgba(244, 63, 94, 0.1) !important;
+        border: 1px solid #f43f5e !important;
+        border-radius: 8px !important;
+        font-family: 'DM Sans', sans-serif !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
     # Center the login form
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 1.5, 1])
 
     with col2:
         st.markdown("""
@@ -119,7 +245,7 @@ def login_form() -> Optional[str]:
             <img src="https://gomagcdn.ro/domains3/obsid.ro/files/company/parfumuri-arabesti8220.svg"
                  class="login-logo" alt="OBSID Logo">
             <h1 class="login-title">Ultimate Facturi</h1>
-            <p class="login-subtitle">Dashboard OBSID</p>
+            <p class="login-subtitle">OBSID Dashboard</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -137,9 +263,9 @@ def login_form() -> Optional[str]:
                         st.session_state.name = credentials['usernames'][username]['name']
                         st.rerun()
                     else:
-                        st.error("Parola incorectă!")
+                        st.error("Parola incorecta")
                 else:
-                    st.error("Utilizator inexistent!")
+                    st.error("Utilizator inexistent")
 
     return None
 
