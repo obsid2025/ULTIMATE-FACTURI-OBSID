@@ -942,27 +942,19 @@ def show_procesare():
             help="Extrasele bancare MT940 de la Banca Transilvania"
         )
 
+        # Info box about automatic sync
         st.markdown("""
         <div class="section-header">
-            <span class="section-title">Fisiere Optionale</span>
+            <span class="section-title">Date Automate</span>
             <div class="section-line"></div>
         </div>
         """, unsafe_allow_html=True)
 
-        netopia_files = st.file_uploader(
-            "Fisiere Netopia (CSV)",
-            type=['csv'],
-            accept_multiple_files=True,
-            key="netopia",
-            help="Exporturile tranzactii Netopia"
-        )
-
-        oblio_file = st.file_uploader(
-            "Fisier Oblio (XLS/XLSX)",
-            type=['xls', 'xlsx'],
-            key="oblio",
-            help="Export facturi din Oblio"
-        )
+        st.info("""
+        **Netopia** si **Oblio** se sincronizeaza automat din pagina **Sincronizare Date**:
+        - Netopia: rapoartele se descarca automat din email
+        - Oblio: facturile se sincronizeaza direct din API
+        """)
 
     st.markdown("---")
 
@@ -974,10 +966,10 @@ def show_procesare():
 
     if st.button("Proceseaza Facturile", disabled=not can_process, use_container_width=True):
         with st.spinner("Se proceseaza..."):
-            process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_files, oblio_file)
+            process_files(gomag_file, gls_files, sameday_files, mt940_files)
 
 
-def process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_files, oblio_file):
+def process_files(gomag_file, gls_files, sameday_files, mt940_files):
     """Proceseaza toate fisierele incarcate."""
     progress = st.progress(0)
     status = st.empty()
@@ -1014,13 +1006,9 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files, netopia_fil
                 with open(os.path.join(mt940_folder, mt_file.name), 'wb') as f:
                     f.write(mt_file.getbuffer())
 
-            # Netopia folder
+            # Netopia folder (empty - data comes from API sync)
             netopia_folder = os.path.join(tmpdir, "netopia")
             os.makedirs(netopia_folder, exist_ok=True)
-            if netopia_files:
-                for np_file in netopia_files:
-                    with open(os.path.join(netopia_folder, np_file.name), 'wb') as f:
-                        f.write(np_file.getbuffer())
 
             progress.progress(30)
             status.text("Procesez incasarile MT940...")
