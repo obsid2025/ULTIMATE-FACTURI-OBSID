@@ -1365,7 +1365,14 @@ def show_data_sync():
     # Import Netopia/IMAP modules
     try:
         from utils.email_imap import is_imap_configured, test_imap_connection, get_all_netopia_batch_ids
-        from utils.netopia_api import sync_netopia_batch, test_netopia_connection
+        from utils.netopia_api import (
+            sync_netopia_batch,
+            test_netopia_connection,
+            save_netopia_transactions_to_supabase,
+            save_netopia_batch_to_supabase,
+            is_batch_already_synced,
+            get_synced_batches_for_month
+        )
         imap_available = True
     except ImportError as e:
         imap_available = False
@@ -1566,10 +1573,30 @@ def show_data_sync():
             batches = st.session_state.get('netopia_batches', [])
 
             if batches:
-                st.write("**Rapoarte gasite:**")
-                for batch in batches[:10]:
-                    batch_date = batch.get('date', '')[:25] if batch.get('date') else 'N/A'
-                    st.write(f"- BatchId: **{batch['batch_id']}** ({batch_date})")
+                # Group batches by month for display
+                batches_by_month = {}
+                for batch in batches:
+                    month = batch.get('report_month', 'Necunoscut')
+                    if month not in batches_by_month:
+                        batches_by_month[month] = []
+                    batches_by_month[month].append(batch)
+
+                st.write("**Rapoarte gasite (grupate pe luni):**")
+
+                # Display grouped by month
+                for month, month_batches in sorted(batches_by_month.items(), reverse=True):
+                    # Check which are already synced
+                    synced_batches = get_synced_batches_for_month(month) if imap_available else []
+
+                    with st.expander(f"Luna {month} ({len(month_batches)} rapoarte)", expanded=(month == list(sorted(batches_by_month.keys(), reverse=True))[0])):
+                        for batch in month_batches:
+                            batch_date = batch.get('date', '')[:25] if batch.get('date') else 'N/A'
+                            is_synced = batch['batch_id'] in synced_batches
+
+                            if is_synced:
+                                st.write(f"✅ BatchId: **{batch['batch_id']}** - {batch_date} (deja sincronizat)")
+                            else:
+                                st.write(f"⏳ BatchId: **{batch['batch_id']}** - {batch_date}")
 
                 # Netopia API Key input
                 netopia_key = st.text_input(
@@ -1578,6 +1605,9 @@ def show_data_sync():
                     type="password",
                     key="netopia_api_key"
                 )
+
+                # Option to skip already synced
+                skip_synced = st.checkbox("Sareste rapoartele deja sincronizate", value=True, key="skip_synced")
 
                 if st.button("Sincronizeaza Toate", key="btn_sync_all_netopia", use_container_width=True, type="primary"):
                     if not netopia_key:
@@ -1588,26 +1618,60 @@ def show_data_sync():
 
                         total_transactions = 0
                         total_amount = 0
+                        skipped_count = 0
                         errors = []
 
                         for i, batch in enumerate(batches):
-                            status.text(f"Se sincronizeaza BatchId {batch['batch_id']}...")
+                            batch_id = batch['batch_id']
+                            report_id = batch.get('report_id', batch_id)
+                            report_month = batch.get('report_month', '')
+
+                            # Check if already synced
+                            if skip_synced and is_batch_already_synced(batch_id):
+                                skipped_count += 1
+                                progress.progress((i + 1) / len(batches))
+                                continue
+
+                            status.text(f"Se sincronizeaza BatchId {batch_id} (Luna {report_month})...")
                             progress.progress((i + 1) / len(batches))
 
                             try:
-                                result = sync_netopia_batch(batch['batch_id'], netopia_key)
+                                result = sync_netopia_batch(report_id, netopia_key)
                                 if result['success']:
+                                    # Save transactions to Supabase
+                                    save_stats = save_netopia_transactions_to_supabase(
+                                        result['transactions'],
+                                        batch_id,
+                                        report_month
+                                    )
+
+                                    # Save batch info
+                                    batch_info = {
+                                        'batch_id': batch_id,
+                                        'report_id': report_id,
+                                        'date': batch.get('date', ''),
+                                        'subject': batch.get('subject', ''),
+                                        'report_month': report_month,
+                                        'count': result['count'],
+                                        'total_amount': result['total_amount'],
+                                        'total_fees': result['total_fees'],
+                                        'net_amount': result['net_amount']
+                                    }
+                                    save_netopia_batch_to_supabase(batch_info)
+
                                     total_transactions += result['count']
                                     total_amount += result['total_amount']
                                 else:
-                                    errors.append(f"BatchId {batch['batch_id']}: {result['error']}")
+                                    errors.append(f"BatchId {batch_id}: {result['error']}")
                             except Exception as e:
-                                errors.append(f"BatchId {batch['batch_id']}: {str(e)}")
+                                errors.append(f"BatchId {batch_id}: {str(e)}")
 
                         progress.progress(100)
                         status.text("Sincronizare completa!")
 
                         st.success(f"Sincronizate {total_transactions} tranzactii, total {total_amount:,.2f} RON")
+                        if skipped_count > 0:
+                            st.info(f"Sarite {skipped_count} rapoarte (deja sincronizate)")
 
                         if errors:
                             with st.expander(f"Erori ({len(errors)})"):

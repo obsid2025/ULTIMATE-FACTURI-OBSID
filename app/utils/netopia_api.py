@@ -5,6 +5,8 @@ Descarca rapoartele de decontare si parseaza tranzactiile
 
 import os
 import csv
+import re
+import zipfile
 import requests
 from io import StringIO, BytesIO
 from typing import List, Dict, Optional
@@ -58,30 +60,46 @@ def download_netopia_report(batch_id: str, api_key: str = None) -> Optional[byte
 
 def parse_netopia_report(report_content: bytes) -> List[Dict]:
     """
-    Parseaza raportul Netopia (CSV/Excel) si extrage tranzactiile.
+    Parseaza raportul Netopia (ZIP cu CSV inauntru) si extrage tranzactiile.
 
     Args:
-        report_content: Continutul raportului ca bytes
+        report_content: Continutul raportului ca bytes (ZIP file)
 
     Returns:
         Lista de tranzactii ca dict-uri
     """
     transactions = []
+    csv_content = None
 
-    # Incearca sa determine formatul (CSV sau Excel)
+    # Raportul vine ca ZIP - trebuie extras CSV-ul
     try:
-        # Incearca CSV mai intai
-        content_str = report_content.decode('utf-8', errors='ignore')
+        with zipfile.ZipFile(BytesIO(report_content), 'r') as zip_file:
+            # Gaseste fisierul CSV in ZIP
+            csv_files = [f for f in zip_file.namelist() if f.endswith('.csv')]
+            if csv_files:
+                csv_content = zip_file.read(csv_files[0]).decode('utf-8', errors='ignore')
+    except zipfile.BadZipFile:
+        # Nu e ZIP, poate e direct CSV
+        csv_content = report_content.decode('utf-8', errors='ignore')
+    except Exception as e:
+        print(f"Eroare la extragere ZIP: {e}")
+        # Incearca direct ca text
+        csv_content = report_content.decode('utf-8', errors='ignore')
 
+    if not csv_content:
+        return transactions
+
+    # Parseaza CSV-ul
+    try:
         # Detecteaza delimitatorul
-        if '\t' in content_str[:1000]:
+        if '\t' in csv_content[:1000]:
             delimiter = '\t'
-        elif ';' in content_str[:1000]:
+        elif ';' in csv_content[:1000]:
             delimiter = ';'
         else:
             delimiter = ','
 
-        reader = csv.DictReader(StringIO(content_str), delimiter=delimiter)
+        reader = csv.DictReader(StringIO(csv_content), delimiter=delimiter)
 
         for row in reader:
             transaction = parse_netopia_row(row)
@@ -89,7 +107,7 @@ def parse_netopia_report(report_content: bytes) -> List[Dict]:
                 transactions.append(transaction)
 
     except Exception as csv_error:
-        # Daca CSV nu merge, incearca Excel
+        # Daca CSV nu merge, incearca Excel (pentru cazuri exceptionale)
         try:
             import pandas as pd
             df = pd.read_excel(BytesIO(report_content))
@@ -109,13 +127,18 @@ def parse_netopia_row(row: Dict) -> Optional[Dict]:
     """
     Parseaza un rand din raportul Netopia.
 
-    Campuri asteptate (pot varia):
-    - ID tranzactie / Transaction ID
-    - Data / Date
-    - Suma / Amount
-    - Comision / Fee
-    - Status
-    - Order ID / Referinta
+    Coloane din CSV-ul Netopia:
+    - # (numar rand)
+    - Comerciant
+    - Id (ID tranzactie Netopia)
+    - Data platii (data tranzactiei)
+    - Data operatiei
+    - Procesat (suma procesata)
+    - Creditat (suma creditata)
+    - Comision (taxa Netopia)
+    - TVA
+    - Moneda
+    - Descriere (contine referinta comanda)
     """
     # Normalizeaza cheile (lowercase, fara spatii)
     normalized = {}
@@ -127,45 +150,54 @@ def parse_netopia_row(row: Dict) -> Optional[Dict]:
     # Cauta campurile relevante
     transaction = {}
 
-    # ID tranzactie
-    for key in ['transaction_id', 'id', 'tranzactie', 'ntpid', 'ntp_id']:
+    # ID tranzactie - prioritate pentru 'id' (coloana Netopia)
+    for key in ['id', 'transaction_id', 'tranzactie', 'ntpid', 'ntp_id']:
         if key in normalized and normalized[key]:
             transaction['transaction_id'] = str(normalized[key]).strip()
             break
 
-    # Data
-    for key in ['date', 'data', 'transaction_date', 'data_tranzactie', 'created']:
+    # Data - prioritate pentru 'data_platii' (coloana Netopia)
+    for key in ['data_platii', 'data_operatiei', 'date', 'data', 'transaction_date', 'data_tranzactie', 'created']:
         if key in normalized and normalized[key]:
             transaction['date'] = str(normalized[key]).strip()
             break
 
-    # Suma
-    for key in ['amount', 'suma', 'valoare', 'total', 'sum']:
+    # Suma - prioritate pentru 'procesat' (coloana Netopia)
+    for key in ['procesat', 'creditat', 'amount', 'suma', 'valoare', 'total', 'sum']:
         if key in normalized and normalized[key]:
             try:
-                # Curata si converteste la float
                 amount_str = str(normalized[key]).replace(',', '.').replace(' ', '')
                 amount_str = ''.join(c for c in amount_str if c.isdigit() or c == '.' or c == '-')
-                transaction['amount'] = float(amount_str)
+                if amount_str:
+                    transaction['amount'] = float(amount_str)
             except:
                 pass
             break
 
-    # Comision
-    for key in ['fee', 'comision', 'commission', 'taxa']:
+    # Comision - exact 'comision' in Netopia
+    for key in ['comision', 'fee', 'commission', 'taxa']:
         if key in normalized and normalized[key]:
             try:
                 fee_str = str(normalized[key]).replace(',', '.').replace(' ', '')
                 fee_str = ''.join(c for c in fee_str if c.isdigit() or c == '.' or c == '-')
-                transaction['fee'] = float(fee_str)
+                if fee_str:
+                    transaction['fee'] = float(fee_str)
+                else:
+                    transaction['fee'] = 0
             except:
                 transaction['fee'] = 0
             break
 
-    # Order ID / Referinta
-    for key in ['order_id', 'orderid', 'referinta', 'reference', 'comanda']:
+    # Order ID / Referinta - din 'descriere' (Netopia pune referinta acolo)
+    for key in ['descriere', 'description', 'order_id', 'orderid', 'referinta', 'reference', 'comanda']:
         if key in normalized and normalized[key]:
-            transaction['order_id'] = str(normalized[key]).strip()
+            desc = str(normalized[key]).strip()
+            # Extrage numarul comenzii din descriere (ex: "Comanda #12345" sau "Order 12345")
+            order_match = re.search(r'(?:comanda|order|#)\s*#?(\d+)', desc, re.IGNORECASE)
+            if order_match:
+                transaction['order_id'] = order_match.group(1)
+            else:
+                transaction['order_id'] = desc
             break
 
     # Status
@@ -174,15 +206,69 @@ def parse_netopia_row(row: Dict) -> Optional[Dict]:
             transaction['status'] = str(normalized[key]).strip()
             break
 
+    # Moneda
+    for key in ['moneda', 'currency']:
+        if key in normalized and normalized[key]:
+            transaction['currency'] = str(normalized[key]).strip()
+            break
+
     # Suma neta (dupa comision)
     if 'amount' in transaction:
         fee = transaction.get('fee', 0)
         transaction['net_amount'] = transaction['amount'] - fee
 
+    # Extrage luna din data pentru clasificare
+    if 'date' in transaction:
+        transaction['report_month'] = extract_month_from_date(transaction['date'])
+
     # Returneaza doar daca avem date esentiale
     if 'amount' in transaction or 'transaction_id' in transaction:
         transaction['source'] = 'Netopia'
         return transaction
+
+    return None
+
+
+def extract_month_from_date(date_str: str) -> Optional[str]:
+    """
+    Extrage luna din data in format YYYY-MM.
+
+    Args:
+        date_str: Data in diferite formate (DD.MM.YYYY, YYYY-MM-DD, etc.)
+
+    Returns:
+        Luna in format YYYY-MM sau None
+    """
+    if not date_str:
+        return None
+
+    # Incearca diferite formate de data
+    formats = [
+        '%d.%m.%Y',      # 15.11.2024
+        '%d/%m/%Y',      # 15/11/2024
+        '%Y-%m-%d',      # 2024-11-15
+        '%d-%m-%Y',      # 15-11-2024
+        '%Y/%m/%d',      # 2024/11/15
+        '%d.%m.%Y %H:%M',  # 15.11.2024 14:30
+        '%d.%m.%Y %H:%M:%S',  # 15.11.2024 14:30:00
+        '%Y-%m-%d %H:%M:%S',  # 2024-11-15 14:30:00
+    ]
+
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(date_str.strip(), fmt)
+            return dt.strftime('%Y-%m')
+        except ValueError:
+            continue
+
+    # Incearca sa extraga manual YYYY-MM
+    match = re.search(r'(\d{4})[/-](\d{2})', date_str)
+    if match:
+        return f"{match.group(1)}-{match.group(2)}"
+
+    match = re.search(r'(\d{2})[./](\d{2})[./](\d{4})', date_str)
+    if match:
+        return f"{match.group(3)}-{match.group(2)}"
 
     return None
 
@@ -231,13 +317,14 @@ def sync_netopia_batch(batch_id: str, api_key: str = None) -> Dict:
     return result
 
 
-def save_netopia_transactions_to_supabase(transactions: List[Dict], batch_id: str) -> Dict:
+def save_netopia_transactions_to_supabase(transactions: List[Dict], batch_id: str, report_month: str = None) -> Dict:
     """
     Salveaza tranzactiile Netopia in Supabase.
 
     Args:
         transactions: Lista de tranzactii
         batch_id: ID-ul batch-ului
+        report_month: Luna raportului in format YYYY-MM (pentru clasificare)
 
     Returns:
         Dict cu statistici de import
@@ -247,6 +334,7 @@ def save_netopia_transactions_to_supabase(transactions: List[Dict], batch_id: st
     stats = {
         'inserted': 0,
         'updated': 0,
+        'skipped': 0,
         'errors': []
     }
 
@@ -257,6 +345,9 @@ def save_netopia_transactions_to_supabase(transactions: List[Dict], batch_id: st
 
     for tx in transactions:
         try:
+            # Determina luna din tranzactie sau foloseste cea din parametru
+            tx_month = tx.get('report_month') or report_month
+
             data = {
                 'batch_id': batch_id,
                 'transaction_id': tx.get('transaction_id', ''),
@@ -266,6 +357,8 @@ def save_netopia_transactions_to_supabase(transactions: List[Dict], batch_id: st
                 'net_amount': tx.get('net_amount', 0),
                 'order_id': tx.get('order_id', ''),
                 'status': tx.get('status', ''),
+                'currency': tx.get('currency', 'RON'),
+                'report_month': tx_month,
                 'source': 'Netopia',
                 'synced_at': datetime.now().isoformat()
             }
@@ -283,6 +376,95 @@ def save_netopia_transactions_to_supabase(transactions: List[Dict], batch_id: st
             stats['errors'].append(f"Eroare la tranzactia {tx.get('transaction_id')}: {str(e)}")
 
     return stats
+
+
+def save_netopia_batch_to_supabase(batch_info: Dict) -> bool:
+    """
+    Salveaza informatiile despre un batch Netopia in Supabase.
+
+    Args:
+        batch_info: Dict cu batch_id, report_id, report_month, etc.
+
+    Returns:
+        True daca salvarea a reusit
+    """
+    from .supabase_client import get_client
+
+    client = get_client()
+    if not client:
+        return False
+
+    try:
+        data = {
+            'batch_id': batch_info.get('batch_id', ''),
+            'report_id': batch_info.get('report_id', ''),
+            'email_date': batch_info.get('date', ''),
+            'email_subject': batch_info.get('subject', ''),
+            'report_month': batch_info.get('report_month', ''),
+            'transactions_count': batch_info.get('count', 0),
+            'total_amount': batch_info.get('total_amount', 0),
+            'total_fees': batch_info.get('total_fees', 0),
+            'net_amount': batch_info.get('net_amount', 0),
+            'synced_at': datetime.now().isoformat()
+        }
+
+        # Upsert pe batch_id
+        result = client.table('netopia_batches').upsert(
+            data,
+            on_conflict='batch_id'
+        ).execute()
+
+        return bool(result.data)
+
+    except Exception as e:
+        print(f"Eroare la salvare batch: {e}")
+        return False
+
+
+def is_batch_already_synced(batch_id: str) -> bool:
+    """
+    Verifica daca un batch a fost deja sincronizat.
+
+    Args:
+        batch_id: ID-ul batch-ului de verificat
+
+    Returns:
+        True daca batch-ul exista deja in Supabase
+    """
+    from .supabase_client import get_client
+
+    client = get_client()
+    if not client:
+        return False
+
+    try:
+        result = client.table('netopia_batches').select('id').eq('batch_id', batch_id).execute()
+        return bool(result.data and len(result.data) > 0)
+    except Exception:
+        return False
+
+
+def get_synced_batches_for_month(report_month: str) -> List[str]:
+    """
+    Obtine lista de batch-uri deja sincronizate pentru o luna.
+
+    Args:
+        report_month: Luna in format YYYY-MM
+
+    Returns:
+        Lista de batch_id-uri sincronizate
+    """
+    from .supabase_client import get_client
+
+    client = get_client()
+    if not client:
+        return []
+
+    try:
+        result = client.table('netopia_batches').select('batch_id').eq('report_month', report_month).execute()
+        return [r['batch_id'] for r in result.data] if result.data else []
+    except Exception:
+        return []
 
 
 def test_netopia_connection(api_key: str = None) -> bool:

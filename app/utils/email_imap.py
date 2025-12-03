@@ -143,15 +143,24 @@ def search_netopia_emails(days_back: int = 30) -> List[Dict]:
                 # Get body
                 body = get_email_body(msg)
 
-                # Extract BatchId
-                batch_id = extract_batch_id(subject, body)
+                # Extract BatchId from subject and Report ID from body URL
+                batch_id = extract_batch_id_from_subject(subject)
+                report_id = extract_report_id_from_body(body)
 
-                if batch_id and batch_id not in seen_batch_ids:
-                    seen_batch_ids.add(batch_id)
+                # Folosim report_id pentru download (e cel din URL)
+                # batch_id e doar pentru afisare/identificare
+                if report_id and report_id not in seen_batch_ids:
+                    seen_batch_ids.add(report_id)
+
+                    # Extrage luna din data email-ului pentru clasificare
+                    report_month = extract_month_from_email_date(date_str)
+
                     results.append({
-                        'batch_id': batch_id,
+                        'batch_id': batch_id or report_id,  # BatchId pentru afisare
+                        'report_id': report_id,  # Report ID pentru download API
                         'subject': subject,
                         'date': date_str,
+                        'report_month': report_month,  # Luna in format YYYY-MM
                         'email_id': email_id.decode()
                     })
 
@@ -168,33 +177,85 @@ def search_netopia_emails(days_back: int = 30) -> List[Dict]:
         mail.logout()
 
 
-def extract_batch_id(subject: str, body: str) -> Optional[str]:
+def extract_batch_id_from_subject(subject: str) -> Optional[str]:
     """
-    Extrage BatchId din subject sau body.
+    Extrage BatchId din subject.
 
-    Patterns:
-    - Subject: "Detalii decontare netopia-payments.com BatchId: 55086741"
-    - Body: "identificatorul BatchId: 55086741"
-    - Body: "/report/2496785/download"
+    Pattern: "Detalii decontare netopia-payments.com BatchId: 55086741"
     """
-    # Pattern-uri pentru BatchId
     patterns = [
         r'BatchId[:\s]+(\d+)',
         r'batch[_-]?id[:\s]+(\d+)',
-        r'/report/(\d+)/download',
     ]
 
-    # Cauta mai intai in subject
     for pattern in patterns:
         match = re.search(pattern, subject, re.IGNORECASE)
         if match:
             return match.group(1)
 
-    # Apoi in body
-    for pattern in patterns:
-        match = re.search(pattern, body, re.IGNORECASE)
-        if match:
-            return match.group(1)
+    return None
+
+
+def extract_report_id_from_body(body: str) -> Optional[str]:
+    """
+    Extrage Report ID din URL-ul de download din body.
+
+    IMPORTANT: Report ID e diferit de BatchId!
+    - BatchId = identificator decontare (ex: 54455472)
+    - Report ID = numarul din URL pentru download API (ex: 2439720)
+
+    Pattern: "/report/2439720/download"
+    """
+    # Pattern pentru URL-ul de download
+    pattern = r'/report/(\d+)/download'
+    match = re.search(pattern, body)
+    if match:
+        return match.group(1)
+
+    return None
+
+
+def extract_month_from_email_date(date_str: str) -> Optional[str]:
+    """
+    Extrage luna din data email-ului in format YYYY-MM.
+
+    Args:
+        date_str: Data email-ului (ex: "Mon, 25 Nov 2024 10:30:00 +0200")
+
+    Returns:
+        Luna in format YYYY-MM sau None
+    """
+    if not date_str:
+        return None
+
+    try:
+        # Parseaza data email-ului (format RFC 2822)
+        from email.utils import parsedate_to_datetime
+        dt = parsedate_to_datetime(date_str)
+        return dt.strftime('%Y-%m')
+    except Exception:
+        pass
+
+    # Fallback: cauta manual luna si anul
+    months = {
+        'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+        'may': '05', 'jun': '06', 'jul': '07', 'aug': '08',
+        'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+    }
+
+    date_lower = date_str.lower()
+
+    # Cauta anul (4 cifre)
+    year_match = re.search(r'\b(20\d{2})\b', date_str)
+    if not year_match:
+        return None
+
+    year = year_match.group(1)
+
+    # Cauta luna
+    for month_name, month_num in months.items():
+        if month_name in date_lower:
+            return f"{year}-{month_num}"
 
     return None
 
