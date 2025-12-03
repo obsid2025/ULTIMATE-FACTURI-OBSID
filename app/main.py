@@ -1380,6 +1380,20 @@ def show_data_sync():
         gls_available = False
         st.warning(f"Modulul GLS API nu este disponibil: {e}")
 
+    # Import Sameday API module
+    try:
+        from utils.sameday_api import (
+            is_sameday_configured,
+            test_sameday_connection,
+            get_sameday_deliveries_with_cod as get_sameday_parcels,
+            save_sameday_parcels_to_supabase,
+            get_cod_summary_by_date as get_sameday_cod_summary
+        )
+        sameday_available = True
+    except ImportError as e:
+        sameday_available = False
+        st.warning(f"Modulul Sameday API nu este disponibil: {e}")
+
     # Connection status
     st.markdown("""
     <div class="section-header">
@@ -1388,7 +1402,7 @@ def show_data_sync():
     </div>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     with col1:
         supabase_ok = test_supabase()
         if supabase_ok:
@@ -1434,6 +1448,15 @@ def show_data_sync():
                 st.warning("GLS API: Neconfigurat")
         else:
             st.error("GLS API: Indisponibil")
+
+    with col6:
+        if sameday_available:
+            if is_sameday_configured():
+                st.success("Sameday API: Configurat")
+            else:
+                st.warning("Sameday API: Neconfigurat")
+        else:
+            st.error("Sameday API: Indisponibil")
 
     st.markdown("---")
 
@@ -1642,6 +1665,95 @@ def show_data_sync():
                             st.error(f"Eroare la salvare: {str(e)}")
     else:
         st.warning("Modulul GLS API nu este disponibil")
+
+    # Sameday sync section
+    st.markdown("---")
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Sincronizare Sameday Courier (API)</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if sameday_available:
+        st.info("Sincronizeaza automat coletele livrate cu ramburs din API-ul Sameday Courier. NOTA: Cautarea poate dura mai mult deoarece API-ul permite doar intervale de 2 ore.")
+
+        col_sd1, col_sd2 = st.columns(2)
+
+        with col_sd1:
+            # Sameday credentials
+            sameday_user = st.text_input(
+                "Username (email)",
+                value=os.getenv('SAMEDAY_USERNAME', ''),
+                key="sameday_username"
+            )
+            sameday_pass = st.text_input(
+                "Password",
+                value=os.getenv('SAMEDAY_PASSWORD', ''),
+                type="password",
+                key="sameday_password"
+            )
+
+            sameday_days = st.slider("Cauta in ultimele N zile", min_value=1, max_value=30, value=7, key="sameday_days",
+                                      help="API-ul Sameday permite doar intervale de 2 ore, deci cautarea poate dura mai mult pentru perioade mari")
+
+        with col_sd2:
+            if st.button("Cauta Colete Sameday", key="btn_search_sameday", use_container_width=True):
+                if not all([sameday_user, sameday_pass]):
+                    st.error("Completeaza toate credentialele Sameday")
+                else:
+                    with st.spinner(f"Se cauta colete Sameday livrate (aceasta poate dura cateva minute)..."):
+                        try:
+                            parcels = get_sameday_parcels(
+                                days_back=sameday_days,
+                                username=sameday_user,
+                                password=sameday_pass
+                            )
+                            st.session_state['sameday_parcels'] = parcels
+                            if parcels:
+                                total_cod = sum(p.get('cod_amount', 0) for p in parcels)
+                                st.success(f"S-au gasit {len(parcels)} colete livrate cu COD, total: {total_cod:,.2f} RON")
+                            else:
+                                st.warning("Nu s-au gasit colete livrate cu COD in perioada selectata")
+                        except Exception as e:
+                            st.error(f"Eroare la cautare Sameday: {str(e)}")
+
+            # Show found parcels
+            sameday_parcels = st.session_state.get('sameday_parcels', [])
+            if sameday_parcels:
+                # Group by delivery date
+                by_date = {}
+                for p in sameday_parcels:
+                    date_str = p.get('delivery_date', 'Necunoscut')
+                    if date_str not in by_date:
+                        by_date[date_str] = []
+                    by_date[date_str].append(p)
+
+                st.write(f"**Colete gasite ({len(sameday_parcels)}):**")
+
+                for date_str, date_parcels in sorted(by_date.items(), reverse=True):
+                    date_total = sum(p.get('cod_amount', 0) for p in date_parcels)
+                    with st.expander(f"{date_str}: {len(date_parcels)} colete, {date_total:,.2f} RON"):
+                        for p in date_parcels[:10]:
+                            st.write(f"• {p['awb_number']} - {p.get('county', 'N/A')} - **{p['cod_amount']:.2f} RON**")
+                        if len(date_parcels) > 10:
+                            st.write(f"... si alte {len(date_parcels) - 10} colete")
+
+                if st.button("Salveaza in Supabase", key="btn_save_sameday", use_container_width=True, type="primary"):
+                    with st.spinner("Se salveaza coletele Sameday..."):
+                        try:
+                            from datetime import datetime
+                            sync_month = datetime.now().strftime("%Y-%m")
+                            stats = save_sameday_parcels_to_supabase(sameday_parcels, sync_month)
+                            st.success(f"Salvate {stats['inserted']} colete in Supabase")
+                            if stats['errors']:
+                                with st.expander(f"Erori ({len(stats['errors'])})"):
+                                    for err in stats['errors'][:10]:
+                                        st.warning(err)
+                        except Exception as e:
+                            st.error(f"Eroare la salvare: {str(e)}")
+    else:
+        st.warning("Modulul Sameday API nu este disponibil")
 
     # Netopia sync section
     st.markdown("---")
