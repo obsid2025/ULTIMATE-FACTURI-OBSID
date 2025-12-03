@@ -1366,6 +1366,20 @@ def show_data_sync():
         imap_available = False
         st.warning(f"Modulele IMAP/Netopia nu sunt disponibile: {e}")
 
+    # Import GLS API module
+    try:
+        from utils.gls_api import (
+            is_gls_configured,
+            test_gls_connection,
+            get_delivered_parcels_with_cod,
+            save_gls_parcels_to_supabase,
+            get_cod_summary_by_date
+        )
+        gls_available = True
+    except ImportError as e:
+        gls_available = False
+        st.warning(f"Modulul GLS API nu este disponibil: {e}")
+
     # Connection status
     st.markdown("""
     <div class="section-header">
@@ -1374,7 +1388,7 @@ def show_data_sync():
     </div>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         supabase_ok = test_supabase()
         if supabase_ok:
@@ -1411,6 +1425,15 @@ def show_data_sync():
                 st.warning("Netopia API: Neconfigurat")
         else:
             st.error("Netopia API: Indisponibil")
+
+    with col5:
+        if gls_available:
+            if is_gls_configured():
+                st.success("GLS API: Configurat")
+            else:
+                st.warning("GLS API: Neconfigurat")
+        else:
+            st.error("GLS API: Indisponibil")
 
     st.markdown("---")
 
@@ -1525,6 +1548,100 @@ def show_data_sync():
                                 st.warning(err)
                 except Exception as e:
                     st.error(f"Eroare la sincronizare: {str(e)}")
+
+    # GLS sync section
+    st.markdown("---")
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Sincronizare GLS (API MyGLS)</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if gls_available:
+        st.info("Sincronizeaza automat coletele livrate cu ramburs din API-ul MyGLS Romania.")
+
+        col_gls1, col_gls2 = st.columns(2)
+
+        with col_gls1:
+            # GLS credentials
+            gls_client = st.text_input(
+                "Client Number",
+                value=os.getenv('GLS_CLIENT_NUMBER', ''),
+                key="gls_client_number"
+            )
+            gls_user = st.text_input(
+                "Username (email)",
+                value=os.getenv('GLS_USERNAME', ''),
+                key="gls_username"
+            )
+            gls_pass = st.text_input(
+                "Password",
+                value=os.getenv('GLS_PASSWORD', ''),
+                type="password",
+                key="gls_password"
+            )
+
+            gls_days = st.slider("Cauta in ultimele N zile", min_value=7, max_value=90, value=30, key="gls_days")
+
+        with col_gls2:
+            if st.button("Cauta Colete GLS", key="btn_search_gls", use_container_width=True):
+                if not all([gls_client, gls_user, gls_pass]):
+                    st.error("Completeaza toate credentialele GLS")
+                else:
+                    with st.spinner("Se cauta colete GLS livrate..."):
+                        try:
+                            parcels = get_delivered_parcels_with_cod(
+                                days_back=gls_days,
+                                username=gls_user,
+                                password=gls_pass,
+                                client_number=gls_client
+                            )
+                            st.session_state['gls_parcels'] = parcels
+                            if parcels:
+                                total_cod = sum(p.get('cod_amount', 0) for p in parcels)
+                                st.success(f"S-au gasit {len(parcels)} colete livrate cu COD, total: {total_cod:,.2f} RON")
+                            else:
+                                st.warning("Nu s-au gasit colete livrate in perioada selectata")
+                        except Exception as e:
+                            st.error(f"Eroare la cautare GLS: {str(e)}")
+
+            # Show found parcels
+            gls_parcels = st.session_state.get('gls_parcels', [])
+            if gls_parcels:
+                # Group by delivery date
+                by_date = {}
+                for p in gls_parcels:
+                    date_str = p.get('delivery_date_str', 'Necunoscut')
+                    if date_str not in by_date:
+                        by_date[date_str] = []
+                    by_date[date_str].append(p)
+
+                st.write(f"**Colete gasite ({len(gls_parcels)}):**")
+
+                for date_str, date_parcels in sorted(by_date.items(), reverse=True):
+                    date_total = sum(p.get('cod_amount', 0) for p in date_parcels)
+                    with st.expander(f"{date_str}: {len(date_parcels)} colete, {date_total:,.2f} RON"):
+                        for p in date_parcels[:10]:
+                            st.write(f"• {p['parcel_number']} - {p['recipient_name']} - **{p['cod_amount']:.2f} RON**")
+                        if len(date_parcels) > 10:
+                            st.write(f"... si alte {len(date_parcels) - 10} colete")
+
+                if st.button("Salveaza in Supabase", key="btn_save_gls", use_container_width=True, type="primary"):
+                    with st.spinner("Se salveaza coletele GLS..."):
+                        try:
+                            from datetime import datetime
+                            sync_month = datetime.now().strftime("%Y-%m")
+                            stats = save_gls_parcels_to_supabase(gls_parcels, sync_month)
+                            st.success(f"Salvate {stats['inserted']} colete in Supabase")
+                            if stats['errors']:
+                                with st.expander(f"Erori ({len(stats['errors'])})"):
+                                    for err in stats['errors'][:10]:
+                                        st.warning(err)
+                        except Exception as e:
+                            st.error(f"Eroare la salvare: {str(e)}")
+    else:
+        st.warning("Modulul GLS API nu este disponibil")
 
     # Netopia sync section
     st.markdown("---")
