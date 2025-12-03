@@ -17,7 +17,8 @@ load_dotenv()
 # Import utils
 from utils.auth import login_form, logout, is_authenticated, get_user_name, check_auth_for_action
 from utils.mt940_parser import extrage_referinte_op_din_mt940_folder, get_sursa_incasare
-from utils.processors import proceseaza_borderouri_gls, proceseaza_borderouri_sameday, proceseaza_netopia
+# NOTE: proceseaza_borderouri_gls, proceseaza_borderouri_sameday removed - now using API sync
+from utils.processors import proceseaza_netopia
 from utils.export import genereaza_export_excel
 from utils.data_sync import (
     import_mt940_to_supabase,
@@ -910,22 +911,6 @@ def show_procesare():
             help="Exportul comenzilor din Gomag"
         )
 
-        gls_files = st.file_uploader(
-            "Borderouri GLS (XLSX)",
-            type=['xlsx'],
-            accept_multiple_files=True,
-            key="gls",
-            help="Borderourile GLS cu colete"
-        )
-
-        sameday_files = st.file_uploader(
-            "Borderouri Sameday (XLSX)",
-            type=['xlsx'],
-            accept_multiple_files=True,
-            key="sameday",
-            help="Borderourile Sameday"
-        )
-
     with col2:
         st.markdown("""
         <div class="section-header">
@@ -951,26 +936,33 @@ def show_procesare():
         """, unsafe_allow_html=True)
 
         st.info("""
-        **Netopia** si **Oblio** se sincronizeaza automat din pagina **Sincronizare Date**:
-        - Netopia: rapoartele se descarca automat din email
-        - Oblio: facturile se sincronizeaza direct din API
+        **Datele se sincronizeaza automat** din pagina **Sincronizare Date**:
+        - **GLS**: colete cu ramburs din API MyGLS
+        - **Sameday**: colete cu ramburs din API Sameday
+        - **Netopia**: rapoartele se descarca automat din email
+        - **Oblio**: facturile se sincronizeaza direct din API
         """)
 
     st.markdown("---")
 
     # Process button
-    can_process = gomag_file is not None and len(gls_files) > 0 and len(mt940_files) > 0
+    can_process = gomag_file is not None and len(mt940_files) > 0
 
     if not can_process:
-        st.warning("Incarca cel putin: Fisier Gomag, Borderouri GLS si Fisiere MT940")
+        st.warning("Incarca cel putin: Fisier Gomag si Fisiere MT940")
 
     if st.button("Proceseaza Facturile", disabled=not can_process, use_container_width=True):
         with st.spinner("Se proceseaza..."):
-            process_files(gomag_file, gls_files, sameday_files, mt940_files)
+            process_files(gomag_file, mt940_files)
 
 
-def process_files(gomag_file, gls_files, sameday_files, mt940_files):
-    """Proceseaza toate fisierele incarcate."""
+def process_files(gomag_file, mt940_files):
+    """Proceseaza fisierele incarcate (Gomag + MT940).
+
+    NOTE: GLS, Sameday si Netopia se sincronizeaza automat din API-uri
+    in pagina 'Sincronizare Date'. Aceasta functie proceseaza doar
+    datele locale pentru matching cu comenzile Gomag.
+    """
     progress = st.progress(0)
     status = st.empty()
 
@@ -985,20 +977,6 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files):
                 f.write(gomag_file.getbuffer())
             gomag_df = pd.read_excel(gomag_path, dtype=str)
 
-            # GLS folder
-            gls_folder = os.path.join(tmpdir, "gls")
-            os.makedirs(gls_folder, exist_ok=True)
-            for gls_file in gls_files:
-                with open(os.path.join(gls_folder, gls_file.name), 'wb') as f:
-                    f.write(gls_file.getbuffer())
-
-            # Sameday folder
-            sameday_folder = os.path.join(tmpdir, "sameday")
-            os.makedirs(sameday_folder, exist_ok=True)
-            for sd_file in sameday_files:
-                with open(os.path.join(sameday_folder, sd_file.name), 'wb') as f:
-                    f.write(sd_file.getbuffer())
-
             # MT940 folder
             mt940_folder = os.path.join(tmpdir, "mt940")
             os.makedirs(mt940_folder, exist_ok=True)
@@ -1006,38 +984,21 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files):
                 with open(os.path.join(mt940_folder, mt_file.name), 'wb') as f:
                     f.write(mt_file.getbuffer())
 
-            # Netopia folder (empty - data comes from API sync)
-            netopia_folder = os.path.join(tmpdir, "netopia")
-            os.makedirs(netopia_folder, exist_ok=True)
-
-            progress.progress(30)
+            progress.progress(40)
             status.text("Procesez incasarile MT940...")
 
             incasari_mt940 = extrage_referinte_op_din_mt940_folder(mt940_folder)
             st.session_state['incasari_mt940'] = incasari_mt940
 
-            progress.progress(50)
-            status.text("Procesez borderourile GLS...")
-
-            rezultate_gls, erori_gls = proceseaza_borderouri_gls(gls_folder, gomag_df.copy())
-
-            progress.progress(65)
-            status.text("Procesez borderourile Sameday...")
-
-            rezultate_sameday, erori_sameday = proceseaza_borderouri_sameday(sameday_folder, gomag_df.copy())
-
             progress.progress(80)
-            status.text("Procesez Netopia...")
-
-            rezultate_netopia, erori_netopia = proceseaza_netopia(netopia_folder, gomag_df.copy())
-
-            progress.progress(90)
             status.text("Generez raportul Excel...")
 
+            # Generate simplified Excel with MT940 data only
+            # GLS, Sameday, Netopia data comes from API sync
             excel_buffer = genereaza_export_excel(
-                rezultate_gls,
-                rezultate_sameday,
-                rezultate_netopia,
+                [],  # GLS - now from API
+                [],  # Sameday - now from API
+                [],  # Netopia - now from API
                 incasari_mt940
             )
 
@@ -1047,23 +1008,14 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files):
             st.success("Procesare finalizata cu succes!")
 
             # Statistics
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2 = st.columns(2)
             with col1:
                 st.metric("Incasari MT940", len(incasari_mt940))
             with col2:
-                st.metric("Borderouri GLS", len(rezultate_gls))
-            with col3:
-                st.metric("Borderouri Sameday", len(rezultate_sameday))
-            with col4:
                 total_suma = sum(i[1] for i in incasari_mt940)
                 st.metric("Total Incasari", f"{total_suma:,.2f} RON")
 
-            # Errors
-            all_errors = erori_gls + erori_sameday + erori_netopia
-            if all_errors:
-                with st.expander(f"Erori ({len(all_errors)})", expanded=False):
-                    for err in all_errors:
-                        st.warning(err)
+            st.info("**Nota:** Datele GLS, Sameday si Netopia se sincronizeaza automat din API-uri in pagina 'Sincronizare Date'.")
 
             # Download
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1074,11 +1026,6 @@ def process_files(gomag_file, gls_files, sameday_files, mt940_files):
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True
             )
-
-            st.session_state['rezultate_gls'] = rezultate_gls
-            st.session_state['rezultate_sameday'] = rezultate_sameday
-            st.session_state['rezultate_netopia'] = rezultate_netopia
-            st.session_state['erori'] = all_errors
 
     except Exception as e:
         st.error(f"Eroare la procesare: {str(e)}")
@@ -1159,13 +1106,14 @@ def show_setari():
 
     st.info("""
     **Ultimate Facturi OBSID**
-    Versiune: 1.0.0
+    Versiune: 2.0.0
 
-    Aplicatie pentru procesarea si gruparea facturilor din:
-    - Borderouri GLS
-    - Borderouri Sameday
-    - Tranzactii Netopia
-    - Extrase bancare MT940 (Banca Transilvania)
+    Aplicatie pentru procesarea si gruparea facturilor cu sincronizare automata:
+    - **GLS**: Colete cu ramburs din API MyGLS
+    - **Sameday**: Colete cu ramburs din API Sameday
+    - **Netopia**: Rapoarte decontare din email
+    - **Oblio**: Facturi sincronizate din API
+    - **MT940**: Extrase bancare Banca Transilvania
     """)
 
     st.markdown("""
@@ -1180,7 +1128,9 @@ def show_setari():
 
     **Functionalitati:**
     - Parsare automata fisiere MT940 de la Banca Transilvania
-    - Potrivire AWB-uri din borderouri cu facturi din Gomag
+    - Sincronizare automata colete GLS si Sameday din API
+    - Sincronizare automata rapoarte Netopia din email
+    - Sincronizare facturi Oblio din API
     - Grupare facturi pe OP-uri bancare
     - Export Excel cu toate datele procesate
     """)
