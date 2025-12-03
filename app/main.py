@@ -1362,14 +1362,14 @@ def show_data_sync():
     </div>
     """, unsafe_allow_html=True)
 
-    # Import Netopia/Gmail modules
+    # Import Netopia/IMAP modules
     try:
-        from utils.gmail_api import is_gmail_authenticated, get_gmail_service, get_all_netopia_batch_ids
+        from utils.email_imap import is_imap_configured, test_imap_connection, get_all_netopia_batch_ids
         from utils.netopia_api import sync_netopia_batch, test_netopia_connection
-        gmail_available = True
+        imap_available = True
     except ImportError as e:
-        gmail_available = False
-        st.warning(f"Modulele Gmail/Netopia nu sunt disponibile: {e}")
+        imap_available = False
+        st.warning(f"Modulele IMAP/Netopia nu sunt disponibile: {e}")
 
     # Connection status
     st.markdown("""
@@ -1395,17 +1395,20 @@ def show_data_sync():
             st.error("Oblio API: Deconectat")
 
     with col3:
-        if gmail_available:
-            gmail_ok = is_gmail_authenticated()
-            if gmail_ok:
-                st.success("Gmail API: Conectat")
+        if imap_available:
+            if is_imap_configured():
+                imap_ok = test_imap_connection()
+                if imap_ok:
+                    st.success("Email IMAP: Conectat")
+                else:
+                    st.error("Email IMAP: Eroare conectare")
             else:
-                st.warning("Gmail API: Neautorizat")
+                st.warning("Email IMAP: Neconfigurat")
         else:
-            st.error("Gmail API: Indisponibil")
+            st.error("Email IMAP: Indisponibil")
 
     with col4:
-        if gmail_available:
+        if imap_available:
             netopia_ok = test_netopia_connection()
             if netopia_ok:
                 st.success("Netopia API: Configurat")
@@ -1532,45 +1535,31 @@ def show_data_sync():
     st.markdown("---")
     st.markdown("""
     <div class="section-header">
-        <span class="section-title">Sincronizare Netopia (Automat din Gmail)</span>
+        <span class="section-title">Sincronizare Netopia (Automat din Email)</span>
         <div class="section-line"></div>
     </div>
     """, unsafe_allow_html=True)
 
-    if gmail_available:
-        st.info("Cauta automat email-urile de la Netopia cu rapoarte de decontare si importa tranzactiile.")
+    if imap_available and is_imap_configured():
+        st.info("Cauta automat email-urile de la Netopia cu rapoarte de decontare din documente@obsid.ro si importa tranzactiile.")
 
         col_net1, col_net2 = st.columns(2)
 
         with col_net1:
-            # Gmail authorization
-            gmail_authenticated = is_gmail_authenticated()
+            # Fetch batch IDs from IMAP
+            days_back = st.slider("Cauta in ultimele N zile", min_value=7, max_value=90, value=30, key="netopia_days")
 
-            if not gmail_authenticated:
-                st.warning("Gmail API nu este autorizat. Apasa butonul pentru a autoriza accesul.")
-                if st.button("Autorizeaza Gmail", key="btn_auth_gmail", use_container_width=True):
+            if st.button("Cauta Rapoarte Netopia", key="btn_search_netopia", use_container_width=True):
+                with st.spinner("Se cauta email-uri Netopia..."):
                     try:
-                        with st.spinner("Se deschide browser-ul pentru autorizare..."):
-                            service = get_gmail_service()
-                        st.success("Gmail autorizat cu succes! Reincarca pagina.")
-                        st.rerun()
+                        batch_ids = get_all_netopia_batch_ids(days_back=days_back)
+                        st.session_state['netopia_batches'] = batch_ids
+                        if batch_ids:
+                            st.success(f"S-au gasit {len(batch_ids)} rapoarte Netopia")
+                        else:
+                            st.warning("Nu s-au gasit rapoarte Netopia in perioada selectata")
                     except Exception as e:
-                        st.error(f"Eroare la autorizare: {str(e)}")
-            else:
-                # Fetch batch IDs from Gmail
-                days_back = st.slider("Cauta in ultimele N zile", min_value=7, max_value=90, value=30, key="netopia_days")
-
-                if st.button("Cauta Rapoarte Netopia", key="btn_search_netopia", use_container_width=True):
-                    with st.spinner("Se cauta email-uri Netopia..."):
-                        try:
-                            batch_ids = get_all_netopia_batch_ids(days_back=days_back)
-                            st.session_state['netopia_batches'] = batch_ids
-                            if batch_ids:
-                                st.success(f"S-au gasit {len(batch_ids)} rapoarte Netopia")
-                            else:
-                                st.warning("Nu s-au gasit rapoarte Netopia in perioada selectata")
-                        except Exception as e:
-                            st.error(f"Eroare la cautare: {str(e)}")
+                        st.error(f"Eroare la cautare: {str(e)}")
 
         with col_net2:
             # Show found batches and sync button
@@ -1579,7 +1568,8 @@ def show_data_sync():
             if batches:
                 st.write("**Rapoarte gasite:**")
                 for batch in batches[:10]:
-                    st.write(f"- BatchId: **{batch['batch_id']}** ({batch['date'][:20]}...)")
+                    batch_date = batch.get('date', '')[:25] if batch.get('date') else 'N/A'
+                    st.write(f"- BatchId: **{batch['batch_id']}** ({batch_date})")
 
                 # Netopia API Key input
                 netopia_key = st.text_input(
@@ -1624,9 +1614,9 @@ def show_data_sync():
                                 for err in errors:
                                     st.warning(err)
             else:
-                st.info("Apasa 'Cauta Rapoarte Netopia' pentru a gasi rapoartele din Gmail")
+                st.info("Apasa 'Cauta Rapoarte Netopia' pentru a gasi rapoartele din email")
     else:
-        st.error("Modulele Gmail/Netopia nu sunt instalate. Ruleaza: pip install google-auth-oauthlib google-api-python-client")
+        st.warning("Configureaza IMAP in fisierul .env (IMAP_SERVER, IMAP_USER, IMAP_PASSWORD)")
 
     # Sync logs
     st.markdown("---")
