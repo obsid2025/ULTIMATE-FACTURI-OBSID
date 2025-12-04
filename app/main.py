@@ -29,12 +29,6 @@ from utils.data_sync import (
     get_transactions_for_period,
     get_invoices_for_period
 )
-from utils.matching_engine import (
-    generate_opuri_report_data,
-    export_opuri_to_excel,
-    get_matching_statistics,
-    search_invoice_by_amount_in_oblio
-)
 from utils.supabase_client import test_connection as test_supabase
 from utils.oblio_api import test_connection as test_oblio
 import plotly.express as px
@@ -636,8 +630,7 @@ def get_page_slug(page_name: str) -> str:
     slugs = {
         "Dashboard": "dashboard",
         "Profit Dashboard": "profit",
-        "Raport OP-uri": "raport-opuri",
-        "Procesare Facturi": "procesare",
+        "Export OP-uri": "export-opuri",
         "Incasari MT940": "incasari",
         "Sincronizare Date": "sincronizare",
         "Setari": "setari"
@@ -650,13 +643,12 @@ def get_page_from_slug(slug: str) -> str:
     pages = {
         "dashboard": "Dashboard",
         "profit": "Profit Dashboard",
-        "raport-opuri": "Raport OP-uri",
-        "procesare": "Procesare Facturi",
+        "export-opuri": "Export OP-uri",
         "incasari": "Incasari MT940",
         "sincronizare": "Sincronizare Date",
         "setari": "Setari"
     }
-    return pages.get(slug, "Raport OP-uri")
+    return pages.get(slug, "Export OP-uri")
 
 
 def navigate_to(page_name: str):
@@ -685,8 +677,7 @@ def main():
     all_pages = [
         "Dashboard",
         "Profit Dashboard",
-        "Raport OP-uri",
-        "Procesare Facturi",
+        "Export OP-uri",
         "Incasari MT940",
         "Sincronizare Date",
         "Setari"
@@ -744,8 +735,7 @@ def main():
         nav_items = [
             ("Dashboard", "Vedere generala"),
             ("Profit Dashboard", "Profit zilnic/lunar/anual"),
-            ("Raport OP-uri", "Export contabilitate"),
-            ("Procesare Facturi", "Incarca si proceseaza"),
+            ("Export OP-uri", "Export contabilitate"),
             ("Incasari MT940", "Extrase bancare"),
             ("Sincronizare Date", "Oblio si MT940"),
             ("Setari", "Configurare")
@@ -786,10 +776,8 @@ def main():
         show_dashboard()
     elif page == "Profit Dashboard":
         show_profit_dashboard()
-    elif page == "Raport OP-uri":
-        show_raport_opuri()
-    elif page == "Procesare Facturi":
-        show_procesare()
+    elif page == "Export OP-uri":
+        show_export_opuri()
     elif page == "Incasari MT940":
         show_incasari()
     elif page == "Sincronizare Date":
@@ -880,8 +868,8 @@ def show_dashboard():
                 st.warning("Incarca mai intai fisierele pentru procesare")
 
 
-def show_procesare():
-    """Pagina de procesare facturi - Export OP-uri."""
+def show_export_opuri():
+    """Pagina de export OP-uri pentru contabilitate."""
     st.markdown("""
     <div class="page-header">
         <h1 class="page-title">Export OP-uri</h1>
@@ -908,6 +896,14 @@ def show_procesare():
             invoices_count = len(client.table("invoices").select("id", count="exact").execute().data)
             mt940_count = len(client.table("bank_transactions").select("id", count="exact").execute().data)
 
+            # Borderouri GLS din email
+            try:
+                borderouri_count = len(client.table("gls_borderouri").select("id", count="exact").execute().data)
+                borderouri_matched = len(client.table("gls_borderouri").select("id", count="exact").eq("op_matched", True).execute().data)
+            except:
+                borderouri_count = 0
+                borderouri_matched = 0
+
             st.markdown("""
             <div class="section-header">
                 <span class="section-title">Date Disponibile in Supabase</span>
@@ -915,20 +911,25 @@ def show_procesare():
             </div>
             """, unsafe_allow_html=True)
 
-            col1, col2, col3, col4, col5 = st.columns(5)
+            col1, col2, col3, col4, col5, col6 = st.columns(6)
             with col1:
-                st.metric("GLS", gls_count)
+                st.metric("GLS Colete", gls_count)
             with col2:
-                st.metric("Sameday", sameday_count)
+                st.metric("GLS Borderouri", borderouri_count, f"{borderouri_matched} potrivite" if borderouri_count > 0 else None)
             with col3:
-                st.metric("Netopia", netopia_count)
+                st.metric("Sameday", sameday_count)
             with col4:
-                st.metric("Facturi Oblio", invoices_count)
+                st.metric("Netopia", netopia_count)
             with col5:
+                st.metric("Facturi Oblio", invoices_count)
+            with col6:
                 st.metric("Tranzactii MT940", mt940_count)
 
             if gls_count == 0 and sameday_count == 0:
                 st.warning("Nu exista date in Supabase. Mergi la **Sincronizare Date** pentru a descarca datele.")
+
+            if borderouri_count == 0:
+                st.info("**TIP**: Sincronizeaza borderourile GLS din email pentru matching precis cu OP-urile bancare. Mergi la **Sincronizare Date** -> **Borderouri GLS din Email**.")
         except Exception as e:
             st.warning(f"Nu s-a putut verifica baza de date: {e}")
 
@@ -1572,56 +1573,181 @@ def show_data_sync():
     st.markdown("---")
 
     # ============================================
-    # Import MT940 - Separat pentru ca e din fisiere locale
+    # Import Extrase Bancare (MT940 sau PDF)
     # ============================================
     st.markdown("""
     <div class="section-header">
-        <span class="section-title">Import MT940 (Extrase Bancare)</span>
+        <span class="section-title">Import Extrase Bancare (MT940 sau PDF)</span>
         <div class="section-line"></div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.info("Importa tranzactiile bancare din fisierele MT940. Acestea sunt necesare pentru gruparea facturilor pe OP-uri.")
+    st.info("""
+    Importa tranzactiile bancare din extrase Banca Transilvania. Poti incarca:
+    - **Fisiere MT940** (.txt) - format standard bancar
+    - **Extrase PDF** (.pdf) - extras de cont descarcat din BT24
 
-    mt940_files_upload = st.file_uploader(
-        "Incarca fisiere MT940 (TXT)",
-        type=['txt'],
+    **Duplicatele sunt ignorate automat** - tranzactiile cu aceeasi referinta OP nu se vor dubla.
+    """)
+
+    bank_files_upload = st.file_uploader(
+        "Incarca extrase bancare (MT940 sau PDF)",
+        type=['txt', 'pdf'],
         accept_multiple_files=True,
-        key="sync_mt940_files"
+        key="sync_bank_files"
     )
 
-    if st.button("Import MT940", key="btn_import_mt940", use_container_width=True, disabled=not supabase_ok):
-        if mt940_files_upload:
+    if st.button("Import Extrase Bancare", key="btn_import_bank", use_container_width=True, disabled=not supabase_ok):
+        if bank_files_upload:
             with st.spinner("Se importa tranzactiile..."):
-                try:
-                    with tempfile.TemporaryDirectory() as tmpdir:
-                        file_names = []
-                        for mt_file in mt940_files_upload:
-                            file_path = os.path.join(tmpdir, mt_file.name)
-                            with open(file_path, 'wb') as f:
-                                f.write(mt_file.getbuffer())
-                            file_names.append(mt_file.name)
+                total_stats = {
+                    'processed': 0,
+                    'inserted': 0,
+                    'skipped': 0,
+                    'errors': []
+                }
 
-                        stats = import_mt940_to_supabase(tmpdir, file_names)
+                for bank_file in bank_files_upload:
+                    file_name = bank_file.name
+                    file_ext = file_name.lower().split('.')[-1]
 
-                    st.success(f"Import finalizat!")
-                    col_a, col_b, col_c = st.columns(3)
-                    with col_a:
-                        st.metric("Procesate", stats['processed'])
-                    with col_b:
-                        st.metric("Inserate", stats['inserted'])
-                    with col_c:
-                        st.metric("Ignorate (duplicate)", stats['skipped'])
+                    try:
+                        if file_ext == 'pdf':
+                            # Import PDF
+                            from utils.pdf_parser import parse_bt_pdf_from_bytes, save_pdf_transactions_to_supabase
 
-                    if stats['errors']:
-                        with st.expander(f"Erori ({len(stats['errors'])})"):
-                            for err in stats['errors'][:10]:
-                                st.warning(err)
-                except Exception as e:
-                    st.error(f"Eroare la import: {str(e)}")
+                            transactions = parse_bt_pdf_from_bytes(bank_file)
+                            stats = save_pdf_transactions_to_supabase(transactions, file_name)
+
+                            total_stats['processed'] += stats.get('processed', 0)
+                            total_stats['inserted'] += stats.get('inserted', 0)
+                            total_stats['skipped'] += stats.get('skipped', 0)
+                            total_stats['errors'].extend(stats.get('errors', []))
+
+                        elif file_ext == 'txt':
+                            # Import MT940
+                            with tempfile.TemporaryDirectory() as tmpdir:
+                                file_path = os.path.join(tmpdir, file_name)
+                                with open(file_path, 'wb') as f:
+                                    f.write(bank_file.getbuffer())
+
+                                stats = import_mt940_to_supabase(tmpdir, [file_name])
+
+                                total_stats['processed'] += stats.get('processed', 0)
+                                total_stats['inserted'] += stats.get('inserted', 0)
+                                total_stats['skipped'] += stats.get('skipped', 0)
+                                total_stats['errors'].extend(stats.get('errors', []))
+
+                    except Exception as e:
+                        total_stats['errors'].append(f"Eroare la {file_name}: {str(e)}")
+
+                st.success(f"Import finalizat!")
+                col_a, col_b, col_c = st.columns(3)
+                with col_a:
+                    st.metric("Procesate", total_stats['processed'])
+                with col_b:
+                    st.metric("Inserate", total_stats['inserted'])
+                with col_c:
+                    st.metric("Ignorate (duplicate)", total_stats['skipped'])
+
+                if total_stats['errors']:
+                    with st.expander(f"Erori ({len(total_stats['errors'])})"):
+                        for err in total_stats['errors'][:10]:
+                            st.warning(err)
         else:
-            st.warning("Incarca fisiere MT940 pentru import")
+            st.warning("Incarca fisiere MT940 sau PDF pentru import")
 
+    # ============================================
+    # Sincronizare Borderouri GLS din Email
+    # ============================================
+    st.markdown("---")
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Borderouri GLS din Email</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.info("""
+    **Sincronizeaza borderourile GLS (desfasuratoare de ramburs) din email.**
+    - Cauta email-uri de la GLS cu subiect "Lista Colete cu Ramburs COD list"
+    - Descarca fisierele XLSX atasate
+    - Extrage coletele si sumele din borderou
+    - Potriveste automat cu OP-urile bancare existente
+    """)
+
+    # Import GLS borderou module
+    gls_borderou_available = False
+    try:
+        from utils.gls_borderou_imap import (
+            sync_gls_borderouri_from_email,
+            match_borderouri_with_bank_transactions,
+            get_borderouri_status
+        )
+        gls_borderou_available = True
+    except ImportError as e:
+        st.warning(f"Modul GLS Borderou indisponibil: {e}")
+
+    if gls_borderou_available:
+        # Show current status
+        try:
+            status = get_borderouri_status()
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Borderouri", status['total'])
+            with col2:
+                st.metric("Potrivite cu OP", status['matched'], f"{status['matched_amount']:.2f} RON")
+            with col3:
+                st.metric("Nepotrivite", status['unmatched'], f"{status['unmatched_amount']:.2f} RON")
+        except Exception as e:
+            st.warning(f"Nu s-a putut obtine statusul borderourilor: {e}")
+
+        col_btn1, col_btn2 = st.columns(2)
+
+        with col_btn1:
+            if st.button("Sincronizare Borderouri din Email", key="btn_sync_gls_borderou", use_container_width=True):
+                with st.spinner("Se cauta email-uri GLS si se descarca borderouri..."):
+                    try:
+                        stats = sync_gls_borderouri_from_email(days_back=60)
+                        st.success(f"Sincronizare completa!")
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            st.metric("Email-uri gasite", stats['emails_found'])
+                        with col_b:
+                            st.metric("Borderouri noi", stats['borderouri_inserted'])
+                        with col_c:
+                            st.metric("Ignorate (duplicate)", stats['borderouri_skipped'])
+
+                        if stats['errors']:
+                            with st.expander(f"Erori ({len(stats['errors'])})"):
+                                for err in stats['errors'][:10]:
+                                    st.warning(err)
+                    except Exception as e:
+                        st.error(f"Eroare la sincronizare: {e}")
+
+        with col_btn2:
+            if st.button("Potrivire Borderouri cu OP-uri", key="btn_match_gls_borderou", use_container_width=True):
+                with st.spinner("Se potrivesc borderourile cu tranzactiile bancare..."):
+                    try:
+                        match_stats = match_borderouri_with_bank_transactions()
+                        st.success(f"Matching complet!")
+                        col_a, col_b = st.columns(2)
+                        with col_a:
+                            st.metric("Potrivite", match_stats['borderouri_matched'])
+                        with col_b:
+                            st.metric("Nepotrivite", match_stats['borderouri_unmatched'])
+
+                        if match_stats['matches']:
+                            with st.expander("Borderouri potrivite"):
+                                for m in match_stats['matches']:
+                                    st.write(f"- {m['borderou_date']}: {m['amount']:.2f} RON -> OP {m['op_reference']} ({m['op_date']})")
+
+                        if match_stats['unmatched']:
+                            with st.expander("Borderouri nepotrivite (necesita OP)"):
+                                for u in match_stats['unmatched']:
+                                    st.write(f"- {u['borderou_date']}: {u['amount']:.2f} RON ({u['parcels_count']} colete)")
+                    except Exception as e:
+                        st.error(f"Eroare la matching: {e}")
 
     # Sync logs
     st.markdown("---")
@@ -1664,7 +1790,7 @@ def show_data_sync():
 
     view_tab = st.selectbox(
         "Alege ce vrei sa vezi:",
-        ["Colete GLS", "Colete Sameday", "Tranzactii Netopia", "Facturi Oblio", "Tranzactii MT940"],
+        ["Colete GLS", "Colete Sameday", "Tranzactii Netopia", "Facturi Oblio", "Tranzactii MT940", "Borderouri GLS"],
         key="view_data_tab"
     )
 
@@ -1729,348 +1855,38 @@ def show_data_sync():
             else:
                 st.info("Nu exista tranzactii MT940 importate.")
 
+        elif view_tab == "Borderouri GLS":
+            result = client.table("gls_borderouri").select("*").order("borderou_date", desc=True).limit(100).execute()
+            if result.data:
+                df = pd.DataFrame(result.data)
+                # Format display columns
+                df_display = df[['borderou_date', 'total_amount', 'parcels_count', 'op_matched', 'op_reference', 'op_date']].copy()
+                df_display.columns = ['Data Borderou', 'Total (RON)', 'Nr. Colete', 'Potrivit', 'Referinta OP', 'Data OP']
+                df_display['Potrivit'] = df_display['Potrivit'].apply(lambda x: 'Da' if x else 'Nu')
+                df_display['Referinta OP'] = df_display['Referinta OP'].fillna('-')
+                df_display['Data OP'] = df_display['Data OP'].fillna('-')
+                st.dataframe(df_display, use_container_width=True, hide_index=True)
+                st.caption(f"Afisate {len(df)} borderouri")
+
+                # Show parcels for selected borderou
+                with st.expander("Detalii colete din borderouri"):
+                    borderou_options = {f"{row['borderou_date']} - {row['total_amount']:.2f} RON": row['id'] for _, row in df.iterrows()}
+                    selected_borderou = st.selectbox("Selecteaza borderou:", list(borderou_options.keys()))
+                    if selected_borderou:
+                        borderou_id = borderou_options[selected_borderou]
+                        parcels_result = client.table("gls_borderou_parcels").select("*").eq("borderou_id", borderou_id).execute()
+                        if parcels_result.data:
+                            parcels_df = pd.DataFrame(parcels_result.data)
+                            parcels_display = parcels_df[['parcel_number', 'cod_amount', 'recipient_name']].copy()
+                            parcels_display.columns = ['Nr. Colet', 'Suma COD', 'Destinatar']
+                            st.dataframe(parcels_display, use_container_width=True, hide_index=True)
+                        else:
+                            st.info("Nu sunt colete pentru acest borderou.")
+            else:
+                st.info("Nu exista borderouri GLS sincronizate.")
+
     except Exception as e:
         st.warning(f"Nu s-au putut incarca datele: {str(e)}")
-
-
-def show_raport_opuri():
-    """Pagina Raport OP-uri pentru contabilitate."""
-    st.markdown("""
-    <div class="page-header">
-        <h1 class="page-title">Raport OP-uri</h1>
-        <p class="page-subtitle">Raport pentru contabilitate - Export facturi grupate pe OP-uri cu matching automat</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Period selector
-    st.markdown("""
-    <div class="section-header">
-        <span class="section-title">Selecteaza Perioada</span>
-        <div class="section-line"></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    from datetime import date, timedelta
-
-    col1, col2, col3 = st.columns([1, 1, 2])
-    with col1:
-        # Default to current month
-        today = date.today()
-        first_day_of_month = today.replace(day=1)
-        start_date = st.date_input("De la", value=first_day_of_month, key="raport_start")
-    with col2:
-        end_date = st.date_input("Pana la", value=today, key="raport_end")
-    with col3:
-        # Quick period buttons
-        st.write("")  # Spacing
-        col_q1, col_q2, col_q3 = st.columns(3)
-        with col_q1:
-            if st.button("Luna curenta", key="btn_luna_curenta", use_container_width=True):
-                st.session_state.raport_start = first_day_of_month
-                st.session_state.raport_end = today
-                st.rerun()
-        with col_q2:
-            if st.button("Luna trecuta", key="btn_luna_trecuta", use_container_width=True):
-                last_month_end = first_day_of_month - timedelta(days=1)
-                last_month_start = last_month_end.replace(day=1)
-                st.session_state.raport_start = last_month_start
-                st.session_state.raport_end = last_month_end
-                st.rerun()
-        with col_q3:
-            if st.button("Tot anul", key="btn_tot_anul", use_container_width=True):
-                st.session_state.raport_start = date(today.year, 1, 1)
-                st.session_state.raport_end = today
-                st.rerun()
-
-    st.markdown("---")
-
-    try:
-        # Get data for the period
-        transactions = get_transactions_for_period(start_date, end_date)
-        invoices = get_invoices_for_period(start_date, end_date)
-
-        if not transactions and not invoices:
-            st.info("Nu exista date pentru perioada selectata. Importa date MT940 si sincronizeaza facturi din pagina 'Sincronizare Date'.")
-            return
-
-        # Get matching statistics
-        stats = get_matching_statistics(start_date, end_date)
-
-        # Summary metrics
-        col1, col2, col3, col4, col5 = st.columns(5)
-
-        with col1:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">Total Incasari</div>
-                <div class="metric-value gold">{stats['transactions_amount']:,.2f} RON</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">Tranzactii</div>
-                <div class="metric-value">{stats['total_transactions']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with col3:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">Facturi Oblio</div>
-                <div class="metric-value">{stats['total_invoices']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with col4:
-            diff = stats['difference']
-            diff_color = "emerald" if abs(diff) < 1 else "rose"
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">Diferenta</div>
-                <div class="metric-value {diff_color}">{diff:+,.2f} RON</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with col5:
-            surse_count = len(stats.get('by_source', {}))
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">Surse Incasari</div>
-                <div class="metric-value">{surse_count}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # Source breakdown
-        if stats.get('by_source'):
-            st.markdown("""
-            <div class="section-header">
-                <span class="section-title">Incasari pe Surse</span>
-                <div class="section-line"></div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            source_cols = st.columns(len(stats['by_source']))
-            for i, (source, data) in enumerate(stats['by_source'].items()):
-                with source_cols[i]:
-                    color_map = {'GLS': 'blue', 'Sameday': 'rose', 'Netopia': 'cyan', 'eMag': 'orange'}
-                    color = color_map.get(source, 'default')
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <div class="metric-label">{source}</div>
-                        <div class="metric-value">{data['count']} tranz.</div>
-                        <div class="metric-sublabel">{data['amount']:,.2f} RON</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-        # Matching section with button
-        st.markdown("""
-        <div class="section-header">
-            <span class="section-title">Matching Tranzactii - Facturi</span>
-            <div class="section-line"></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        col_match1, col_match2 = st.columns([1, 3])
-        with col_match1:
-            run_matching = st.button("Ruleaza Matching", key="btn_run_matching", use_container_width=True, type="primary")
-
-        if run_matching or st.session_state.get('matching_results'):
-            with st.spinner("Se proceseaza matching-ul..."):
-                # Generate report data with matching
-                report_data = generate_opuri_report_data(start_date, end_date)
-                st.session_state['matching_results'] = report_data
-
-            if report_data:
-                # Count matches and errors
-                matched_count = sum(1 for r in report_data if r.get('numar_factura'))
-                error_count = sum(1 for r in report_data if r.get('erori') == 'DA')
-
-                st.success(f"Matching complet: {matched_count} potriviri, {error_count} erori")
-
-                # Display matched data
-                df_report = pd.DataFrame(report_data)
-                df_report = df_report.rename(columns={
-                    'data_op': 'Data OP',
-                    'numar_op': 'Numar OP',
-                    'nume_borderou': 'Borderou',
-                    'curier': 'Curier',
-                    'order_id': 'Order ID',
-                    'numar_factura': 'Nr. Factura',
-                    'suma': 'Suma',
-                    'erori': 'Erori',
-                    'diferenta_emag': 'Dif. eMag',
-                    'facturi_comision_emag': 'Facturi Comision'
-                })
-
-                # Style the dataframe
-                def highlight_errors(row):
-                    if row.get('Erori') == 'DA':
-                        return ['background-color: rgba(248, 81, 73, 0.2)'] * len(row)
-                    return [''] * len(row)
-
-                st.dataframe(
-                    df_report.style.apply(highlight_errors, axis=1),
-                    use_container_width=True,
-                    hide_index=True
-                )
-            else:
-                st.warning("Nu s-au gasit date pentru matching in perioada selectata.")
-
-        # Transactions table (raw data)
-        if transactions:
-            with st.expander("Tranzactii Bancare (date brute)", expanded=False):
-                display_data = []
-                for t in transactions:
-                    display_data.append({
-                        'Data OP': t.get('transaction_date', ''),
-                        'Numar OP': t.get('op_reference', ''),
-                        'Curier': t.get('source', ''),
-                        'Suma': f"{float(t.get('amount', 0)):,.2f} RON",
-                        'Detalii': (t.get('details', '') or '')[:50] + '...' if t.get('details') and len(t.get('details', '')) > 50 else t.get('details', '')
-                    })
-                df_display = pd.DataFrame(display_data)
-                st.dataframe(df_display, use_container_width=True, hide_index=True)
-
-        # Invoices section
-        if invoices:
-            with st.expander("Facturi Oblio (date brute)", expanded=False):
-                inv_data = []
-                for inv in invoices:
-                    inv_data.append({
-                        'Data': inv.get('issue_date', ''),
-                        'Serie': inv.get('series_name', ''),
-                        'Numar': inv.get('invoice_number', ''),
-                        'Client': inv.get('client_name', ''),
-                        'Total': f"{float(inv.get('total', 0)):,.2f} RON",
-                        'Tip': inv.get('invoice_type', ''),
-                        'Incasata': 'DA' if inv.get('is_collected') else 'NU'
-                    })
-                df_inv = pd.DataFrame(inv_data)
-                st.dataframe(df_inv, use_container_width=True, hide_index=True)
-
-        # Export section
-        st.markdown("""
-        <div class="section-header">
-            <span class="section-title">Export Excel</span>
-            <div class="section-line"></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        col1, col2 = st.columns(2)
-        with col1:
-            # Generate Excel with matching data
-            from io import BytesIO
-            from openpyxl import Workbook
-            from openpyxl.styles import Font, PatternFill, Alignment
-
-            buffer = BytesIO()
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "OP-uri"
-
-            # Headers matching opuri_export.xlsx format
-            headers = ["Data OP", "Numar OP", "Nume Borderou", "Curier", "Order ID", "Numar Factura", "Suma", "Erori", "Diferenta eMag", "Facturi Comision eMag"]
-            ws.append(headers)
-
-            # Style header
-            header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-            header_font = Font(bold=True, color="FFFFFF")
-            for col in range(1, len(headers) + 1):
-                cell = ws.cell(row=1, column=col)
-                cell.fill = header_fill
-                cell.font = header_font
-                cell.alignment = Alignment(horizontal='center')
-
-            # Color fills
-            gls_fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-            sameday_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
-            netopia_fill = PatternFill(start_color="DAEEF3", end_color="DAEEF3", fill_type="solid")
-            emag_fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
-            error_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
-
-            # Use matching results if available, otherwise raw transactions
-            export_data = st.session_state.get('matching_results', [])
-            if not export_data:
-                export_data = [{
-                    'data_op': t.get('transaction_date', ''),
-                    'numar_op': t.get('op_reference', ''),
-                    'nume_borderou': t.get('file_name', ''),
-                    'curier': t.get('source', ''),
-                    'order_id': '',
-                    'numar_factura': '',
-                    'suma': float(t.get('amount', 0)),
-                    'erori': 'NU',
-                    'diferenta_emag': '',
-                    'facturi_comision_emag': ''
-                } for t in transactions]
-
-            for data in export_data:
-                ws.append([
-                    data.get('data_op', ''),
-                    data.get('numar_op', ''),
-                    data.get('nume_borderou', ''),
-                    data.get('curier', ''),
-                    data.get('order_id', ''),
-                    data.get('numar_factura', ''),
-                    data.get('suma', 0),
-                    data.get('erori', 'NU'),
-                    data.get('diferenta_emag', ''),
-                    data.get('facturi_comision_emag', '')
-                ])
-
-                row_idx = ws.max_row
-                source = data.get('curier', '')
-
-                # Color courier cell
-                if source == 'GLS':
-                    ws.cell(row=row_idx, column=4).fill = gls_fill
-                    ws.cell(row=row_idx, column=4).font = Font(color="FFFFFF")
-                elif source == 'Sameday':
-                    ws.cell(row=row_idx, column=4).fill = sameday_fill
-                    ws.cell(row=row_idx, column=4).font = Font(color="FFFFFF")
-                elif source == 'Netopia':
-                    ws.cell(row=row_idx, column=4).fill = netopia_fill
-                elif source == 'eMag':
-                    ws.cell(row=row_idx, column=4).fill = emag_fill
-
-                # Color error cell
-                if data.get('erori') == 'DA':
-                    ws.cell(row=row_idx, column=8).fill = error_fill
-                    ws.cell(row=row_idx, column=8).font = Font(color="FFFFFF")
-
-            # Adjust column widths
-            column_widths = [12, 22, 25, 12, 15, 15, 12, 8, 15, 35]
-            for col_idx, width in enumerate(column_widths, 1):
-                ws.column_dimensions[chr(64 + col_idx)].width = width
-
-            wb.save(buffer)
-            buffer.seek(0)
-
-            st.download_button(
-                label="Descarca opuri_export.xlsx",
-                data=buffer,
-                file_name=f"opuri_export_{start_date}_{end_date}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-                type="primary"
-            )
-
-        with col2:
-            st.markdown("""
-            <div class="info-card">
-                <p><strong>Acest raport contine:</strong></p>
-                <ul>
-                    <li>Tranzactii bancare din MT940</li>
-                    <li>Matching automat cu facturi Oblio</li>
-                    <li>Cautare in Oblio API pentru AWB-uri fara factura</li>
-                    <li>Colorare pe surse (GLS, Sameday, Netopia, eMag)</li>
-                    <li>Marcare erori pentru tranzactii nepotrivite</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-
-    except Exception as e:
-        st.error(f"Eroare la incarcarea datelor: {str(e)}")
-        import traceback
-        st.code(traceback.format_exc())
 
 
 if __name__ == "__main__":

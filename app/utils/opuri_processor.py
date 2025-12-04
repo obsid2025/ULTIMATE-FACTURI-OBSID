@@ -77,6 +77,71 @@ def get_mt940_transactions_for_period(start_date: str, end_date: str) -> List[Di
         return []
 
 
+def get_gls_borderouri_for_period(start_date: str, end_date: str) -> List[Dict]:
+    """
+    Obtine borderourile GLS din email pentru o perioada.
+    Acestea contin gruparea reala a coletelor asa cum le trimite GLS.
+    """
+    client = get_client()
+    if not client:
+        return []
+
+    try:
+        result = client.table("gls_borderouri").select("*").gte(
+            "borderou_date", start_date
+        ).lte(
+            "borderou_date", end_date
+        ).order("borderou_date").execute()
+
+        borderouri = result.data or []
+
+        # Pentru fiecare borderou, obtine coletele asociate
+        for borderou in borderouri:
+            parcels_result = client.table("gls_borderou_parcels").select("*").eq(
+                "borderou_id", borderou['id']
+            ).execute()
+            borderou['parcels'] = parcels_result.data or []
+
+        return borderouri
+    except Exception as e:
+        print(f"Eroare la citirea GLS borderouri: {e}")
+        return []
+
+
+def get_gls_parcels_not_in_borderouri(start_date: str, end_date: str, borderou_parcels: List[str]) -> List[Dict]:
+    """
+    Obtine coletele GLS care nu sunt incluse in niciun borderou.
+    Acestea sunt colete livrate dar neprimite inca in borderoul de ramburs.
+    """
+    client = get_client()
+    if not client:
+        return []
+
+    try:
+        # Obtine toate coletele GLS livrate in perioada
+        result = client.table("gls_parcels").select("*").gte(
+            "delivery_date", start_date
+        ).lte(
+            "delivery_date", end_date
+        ).eq("is_delivered", True).execute()
+
+        all_parcels = result.data or []
+
+        # Filtreaza coletele care nu sunt in borderouri
+        # borderou_parcels contine numerele de colet din borderouri
+        pending_parcels = []
+        for p in all_parcels:
+            parcel_num = str(p.get('parcel_number', ''))
+            # Verifica daca coletul NU este in niciun borderou
+            if parcel_num not in borderou_parcels:
+                pending_parcels.append(p)
+
+        return pending_parcels
+    except Exception as e:
+        print(f"Eroare la citirea GLS parcels pending: {e}")
+        return []
+
+
 def group_parcels_by_delivery_date(parcels: List[Dict], curier: str) -> List[Dict]:
     """
     Grupeaza coletele pe data livrarii (simuleaza borderourile).
@@ -197,11 +262,49 @@ def generate_opuri_export(
 ) -> BytesIO:
     """
     Genereaza export-ul OP-uri in formatul original.
+
+    IMPORTANT: Pentru GLS foloseste borderourile REALE din email (gls_borderouri table),
+    nu gruparile simulate pe data livrarii. Borderourile GLS din email contin gruparea
+    exacta a coletelor asa cum apar in desfasuratorul de ramburs.
     """
     # Obtine datele din Supabase
-    gls_parcels = get_gls_parcels_for_period(start_date, end_date)
     sameday_parcels = get_sameday_parcels_for_period(start_date, end_date)
     mt940_transactions = get_mt940_transactions_for_period(start_date, end_date)
+
+    # Obtine borderourile GLS REALE din email (nu simulate)
+    gls_borderouri_real = get_gls_borderouri_for_period(start_date, end_date)
+
+    # Formateaza borderourile GLS pentru procesare
+    gls_borderouri = []
+    borderou_parcel_numbers = set()  # Track parcels already in borderouri
+
+    for borderou in gls_borderouri_real:
+        parcels = borderou.get('parcels', [])
+        suma_total = float(borderou.get('total_amount', 0))
+
+        # Track parcel numbers
+        for p in parcels:
+            borderou_parcel_numbers.add(str(p.get('parcel_number', '')))
+
+        # Formateaza borderou pentru procesare
+        gls_borderouri.append({
+            'borderou': borderou.get('file_name', f"GLS_{borderou['borderou_date']}.xlsx"),
+            'curier': 'GLS',
+            'delivery_date': borderou.get('borderou_date', ''),
+            'parcels': parcels,
+            'suma_total': suma_total,
+            'op_reference': borderou.get('op_reference', ''),
+            'op_date': borderou.get('op_date', ''),
+            'op_matched': borderou.get('op_matched', False)
+        })
+
+    # Daca nu sunt borderouri din email, foloseste metoda veche (fallback)
+    if not gls_borderouri:
+        gls_parcels = get_gls_parcels_for_period(start_date, end_date)
+        gls_borderouri = group_parcels_by_delivery_date(gls_parcels, "GLS")
+
+    # Pentru Sameday folosim metoda veche (grupeaza pe data livrarii)
+    sameday_borderouri = group_parcels_by_delivery_date(sameday_parcels, "Sameday")
 
     # Obtine facturile din Oblio
     client = get_client()
@@ -212,10 +315,6 @@ def generate_opuri_export(
             invoices = result.data or []
         except:
             pass
-
-    # Grupeaza coletele pe borderouri (data livrarii)
-    gls_borderouri = group_parcels_by_delivery_date(gls_parcels, "GLS")
-    sameday_borderouri = group_parcels_by_delivery_date(sameday_parcels, "Sameday")
 
     # Creeaza workbook
     wb = Workbook()
@@ -263,8 +362,13 @@ def generate_opuri_export(
             parcels = borderou['parcels']
             suma_total = borderou['suma_total']
 
-            # Gaseste OP-ul
-            numar_op, data_op = match_op_with_borderou(suma_total, mt940_transactions, curier)
+            # Pentru GLS, foloseste OP-ul pre-potrivit daca exista
+            if curier == "GLS" and borderou.get('op_matched'):
+                numar_op = borderou.get('op_reference', '')
+                data_op = borderou.get('op_date', '')
+            else:
+                # Gaseste OP-ul prin matching cu MT940
+                numar_op, data_op = match_op_with_borderou(suma_total, mt940_transactions, curier)
 
             # Proceseaza fiecare colet
             facturi_ok = []
