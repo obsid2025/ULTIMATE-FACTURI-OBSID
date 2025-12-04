@@ -1651,6 +1651,87 @@ def show_data_sync():
     except Exception as e:
         st.warning(f"Nu s-a putut incarca istoricul: {str(e)}")
 
+    # ============================================
+    # Vizualizare Date Sincronizate
+    # ============================================
+    st.markdown("---")
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Vizualizare Date Sincronizate</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    view_tab = st.selectbox(
+        "Alege ce vrei sa vezi:",
+        ["Colete GLS", "Colete Sameday", "Tranzactii Netopia", "Facturi Oblio", "Tranzactii MT940"],
+        key="view_data_tab"
+    )
+
+    try:
+        if view_tab == "Colete GLS":
+            result = client.table("gls_parcels").select("*").order("delivery_date", desc=True).limit(100).execute()
+            if result.data:
+                df = pd.DataFrame(result.data)
+                # Selecteaza coloanele relevante
+                display_cols = ['parcel_number', 'cod_amount', 'recipient_name', 'recipient_city', 'delivery_date', 'is_delivered']
+                display_cols = [c for c in display_cols if c in df.columns]
+                df_display = df[display_cols] if display_cols else df
+                df_display.columns = ['Nr. Colet', 'Suma COD', 'Destinatar', 'Oras', 'Data Livrare', 'Livrat'] if len(display_cols) == 6 else df_display.columns
+                st.dataframe(df_display, use_container_width=True, hide_index=True)
+                st.caption(f"Afisate ultimele {len(df)} colete (din total {len(result.data)})")
+            else:
+                st.info("Nu exista colete GLS sincronizate.")
+
+        elif view_tab == "Colete Sameday":
+            result = client.table("sameday_parcels").select("*").order("delivery_date", desc=True).limit(100).execute()
+            if result.data:
+                df = pd.DataFrame(result.data)
+                display_cols = ['awb_number', 'cod_amount', 'county', 'delivery_date', 'is_delivered', 'status']
+                display_cols = [c for c in display_cols if c in df.columns]
+                df_display = df[display_cols] if display_cols else df
+                df_display.columns = ['AWB', 'Suma COD', 'Judet', 'Data Livrare', 'Livrat', 'Status'] if len(display_cols) == 6 else df_display.columns
+                st.dataframe(df_display, use_container_width=True, hide_index=True)
+                st.caption(f"Afisate ultimele {len(df)} colete")
+            else:
+                st.info("Nu exista colete Sameday sincronizate.")
+
+        elif view_tab == "Tranzactii Netopia":
+            result = client.table("netopia_transactions").select("*").order("synced_at", desc=True).limit(100).execute()
+            if result.data:
+                df = pd.DataFrame(result.data)
+                display_cols = ['order_id', 'amount', 'fee', 'net_amount', 'payment_date', 'batch_id']
+                display_cols = [c for c in display_cols if c in df.columns]
+                df_display = df[display_cols] if display_cols else df
+                st.dataframe(df_display, use_container_width=True, hide_index=True)
+                st.caption(f"Afisate ultimele {len(df)} tranzactii")
+            else:
+                st.info("Nu exista tranzactii Netopia sincronizate.")
+
+        elif view_tab == "Facturi Oblio":
+            result = client.table("invoices").select("*").order("synced_at", desc=True).limit(100).execute()
+            if result.data:
+                df = pd.DataFrame(result.data)
+                st.dataframe(df, use_container_width=True, hide_index=True)
+                st.caption(f"Afisate ultimele {len(df)} facturi")
+            else:
+                st.info("Nu exista facturi Oblio sincronizate.")
+
+        elif view_tab == "Tranzactii MT940":
+            result = client.table("bank_transactions").select("*").order("date", desc=True).limit(100).execute()
+            if result.data:
+                df = pd.DataFrame(result.data)
+                display_cols = ['date', 'reference', 'amount', 'description', 'transaction_type']
+                display_cols = [c for c in display_cols if c in df.columns]
+                df_display = df[display_cols] if display_cols else df
+                st.dataframe(df_display, use_container_width=True, hide_index=True)
+                st.caption(f"Afisate ultimele {len(df)} tranzactii bancare")
+            else:
+                st.info("Nu exista tranzactii MT940 importate.")
+
+    except Exception as e:
+        st.warning(f"Nu s-au putut incarca datele: {str(e)}")
+
 
 def show_raport_opuri():
     """Pagina Raport OP-uri pentru contabilitate."""
