@@ -16,7 +16,8 @@ load_dotenv()
 GLS_API_URL = "https://api.mygls.ro/ParcelService.svc/json"
 GLS_CLIENT_NUMBER = os.getenv('GLS_CLIENT_NUMBER', '')
 GLS_USERNAME = os.getenv('GLS_USERNAME', '')
-GLS_PASSWORD = os.getenv('GLS_PASSWORD', '')
+# Fix: Coolify escapes quotes, so we need to unescape them
+GLS_PASSWORD = os.getenv('GLS_PASSWORD', '').replace('\\"', '"').replace("\\'", "'")
 
 
 def set_gls_credentials(client_number: str, username: str, password: str):
