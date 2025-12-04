@@ -17,13 +17,6 @@ from .supabase_client import get_supabase_client as get_client
 def get_gls_parcels_for_period(start_date: str, end_date: str) -> List[Dict]:
     """
     Obtine coletele GLS livrate intr-o perioada.
-
-    Args:
-        start_date: Data start (YYYY-MM-DD)
-        end_date: Data end (YYYY-MM-DD)
-
-    Returns:
-        Lista de colete GLS grupate pe data livrarii
     """
     client = get_client()
     if not client:
@@ -63,23 +56,6 @@ def get_sameday_parcels_for_period(start_date: str, end_date: str) -> List[Dict]
         return []
 
 
-def get_netopia_transactions_for_period(start_date: str, end_date: str) -> List[Dict]:
-    """
-    Obtine tranzactiile Netopia pentru o perioada.
-    """
-    client = get_client()
-    if not client:
-        return []
-
-    try:
-        # Netopia transactions don't have delivery_date, use synced_at or batch date
-        result = client.table("netopia_transactions").select("*").execute()
-        return result.data or []
-    except Exception as e:
-        print(f"Eroare la citirea Netopia: {e}")
-        return []
-
-
 def get_mt940_transactions_for_period(start_date: str, end_date: str) -> List[Dict]:
     """
     Obtine tranzactiile MT940 (OP-uri bancare) pentru o perioada.
@@ -104,17 +80,10 @@ def get_mt940_transactions_for_period(start_date: str, end_date: str) -> List[Di
 def group_parcels_by_delivery_date(parcels: List[Dict], curier: str) -> List[Dict]:
     """
     Grupeaza coletele pe data livrarii (simuleaza borderourile).
-
-    Returneza lista de "borderouri" cu:
-    - borderou: nume borderou (data)
-    - curier: GLS/Sameday
-    - parcels: lista de colete
-    - suma_total: suma totala COD
     """
     if not parcels:
         return []
 
-    # Group by delivery date
     by_date = {}
     for p in parcels:
         date_str = p.get('delivery_date', 'Unknown')
@@ -126,16 +95,13 @@ def group_parcels_by_delivery_date(parcels: List[Dict], curier: str) -> List[Dic
     for date_str, date_parcels in sorted(by_date.items()):
         suma_total = sum(float(p.get('cod_amount', 0) or 0) for p in date_parcels)
 
-        # Generate borderou name like original app
         if curier == "GLS":
-            # GLS: clientnumber_RON_DDMMYYYY.xlsx format
             try:
                 dt = datetime.strptime(date_str, '%Y-%m-%d')
                 borderou_name = f"553005982_RON_{dt.strftime('%d%m%Y')}.xlsx"
             except:
                 borderou_name = f"GLS_{date_str}.xlsx"
         else:
-            # Sameday: YYYY-MM-DD-obsid-s r l-cod-ledger-ron.xlsx format
             try:
                 borderou_name = f"{date_str}-obsid-s r l-cod-ledger-ron.xlsx"
             except:
@@ -152,112 +118,62 @@ def group_parcels_by_delivery_date(parcels: List[Dict], curier: str) -> List[Dic
     return result
 
 
-def match_parcels_with_gomag_oblio(
-    parcels: List[Dict],
-    gomag_df: pd.DataFrame,
-    invoices: List[Dict]
-) -> Tuple[pd.DataFrame, List[str]]:
+def match_awb_with_gomag(awb: str, gomag_df: pd.DataFrame, curier: str) -> Tuple[str, str]:
     """
-    Potriveste coletele cu comenzile din Gomag si facturile din Oblio.
+    Cauta AWB-ul in Gomag si returneaza (Order ID, Numar Factura).
 
-    Args:
-        parcels: Lista de colete (GLS sau Sameday)
-        gomag_df: DataFrame cu comenzile Gomag
-        invoices: Lista de facturi din Oblio (Supabase)
-
-    Returns:
-        Tuple (DataFrame cu rezultate, lista de erori)
+    Pentru GLS: AWB-ul din borderou poate avea 3 caractere extra la final.
+    Pentru Sameday: AWB-ul poate avea 3 caractere la final (001, 002, etc.)
     """
-    erori = []
-    rezultate = []
+    if gomag_df is None or gomag_df.empty:
+        return '', ''
 
-    # Pregateste dictionarul de facturi pentru cautare rapida
-    # Factura poate fi gasita dupa order_id sau alte referinte
-    facturi_by_order = {}
-    for inv in invoices:
-        # Extrage order ID din referinta sau alte campuri
-        ref = inv.get('reference', '') or ''
-        order_id = inv.get('order_id', '')
-
-        if order_id:
-            facturi_by_order[str(order_id)] = inv
-
-        # Incearca sa extragi order ID din referinta
-        import re
-        matches = re.findall(r'\b(\d{3,6})\b', ref)
-        for m in matches:
-            if m not in facturi_by_order:
-                facturi_by_order[m] = inv
+    # Normalizeaza AWB
+    awb_norm = str(awb).strip().replace(' ', '').lstrip('0')
 
     # Pregateste Gomag pentru cautare
-    gomag_lookup = {}
-    if gomag_df is not None and not gomag_df.empty:
-        for _, row in gomag_df.iterrows():
-            # Cauta AWB in Gomag
-            awb = str(row.get('AWB', row.get('awb', row.get('Numar AWB', '')))).strip()
-            order_id = str(row.get('ID', row.get('Order ID', row.get('id', '')))).strip()
+    gomag_df = gomag_df.copy()
+    gomag_df.columns = gomag_df.columns.str.strip().str.lower()
 
-            if awb:
-                gomag_lookup[awb] = {
-                    'order_id': order_id,
-                    'awb': awb,
-                    'row': row
-                }
+    if 'awb' not in gomag_df.columns:
+        return '', ''
 
-    for p in parcels:
-        # Normalizeaza AWB
-        awb = p.get('parcel_number', p.get('awb_number', ''))
-        awb_norm = str(awb).strip().upper()
+    gomag_df['awb_norm'] = gomag_df['awb'].astype(str).str.strip().str.replace(' ', '').str.lstrip('0')
 
-        cod_amount = float(p.get('cod_amount', 0) or 0)
+    # Cauta potrivire directa
+    match = gomag_df[gomag_df['awb_norm'] == awb_norm]
 
-        # Cauta in Gomag
-        gomag_match = None
-        order_id = None
+    # Daca nu gaseste, incearca fara ultimele 3 caractere (pentru GLS)
+    if match.empty and len(awb_norm) > 10:
+        awb_short = awb_norm[:-3]
+        match = gomag_df[gomag_df['awb_norm'] == awb_short]
 
-        # Incearca potrivire directa
-        if awb_norm in gomag_lookup:
-            gomag_match = gomag_lookup[awb_norm]
-            order_id = gomag_match['order_id']
+    # Daca nu gaseste, incearca cu ultimele 3 caractere adaugate
+    if match.empty:
+        match = gomag_df[gomag_df['awb_norm'].str.startswith(awb_norm)]
 
-        # Incearca fara ultimele 3 caractere (pentru GLS)
-        if not gomag_match and len(awb_norm) > 10:
-            awb_short = awb_norm[:-3]
-            if awb_short in gomag_lookup:
-                gomag_match = gomag_lookup[awb_short]
-                order_id = gomag_match['order_id']
+    if not match.empty:
+        row = match.iloc[0]
+        order_id = str(row.get('numar comanda', row.get('id', ''))).strip()
+        numar_factura = str(row.get('numar factura', '')).strip()
 
-        # Cauta factura
-        numar_factura = None
-        if order_id and order_id in facturi_by_order:
-            numar_factura = facturi_by_order[order_id].get('number', '')
+        # Curata numarul facturii
+        if numar_factura and numar_factura != 'nan':
+            try:
+                numar_factura = str(int(float(numar_factura)))
+            except:
+                pass
+        else:
+            numar_factura = ''
 
-        # Adauga rezultat
-        rezultate.append({
-            'AWB_normalizat': awb_norm,
-            'Order ID': order_id or '',
-            'numar factura': numar_factura or '',
-            'Sumă ramburs': cod_amount,
-            'eroare': 'NU' if numar_factura else 'DA'
-        })
+        return order_id, numar_factura
 
-        if not numar_factura:
-            erori.append(f"AWB {awb_norm}: nu s-a gasit factura")
-
-    return pd.DataFrame(rezultate), erori
+    return '', ''
 
 
 def match_op_with_borderou(suma_borderou: float, mt940_transactions: List[Dict], curier: str) -> Tuple[str, str]:
     """
     Gaseste OP-ul care se potriveste cu suma borderoului si curierul.
-
-    Args:
-        suma_borderou: Suma totala a borderoului
-        mt940_transactions: Lista de tranzactii MT940
-        curier: Numele curierului (GLS, Sameday, Netopia)
-
-    Returns:
-        Tuple (numar_op, data_op)
     """
     for trans in mt940_transactions:
         suma_op = float(trans.get('amount', 0) or 0)
@@ -281,14 +197,6 @@ def generate_opuri_export(
 ) -> BytesIO:
     """
     Genereaza export-ul OP-uri in formatul original.
-
-    Args:
-        start_date: Data start (YYYY-MM-DD)
-        end_date: Data end (YYYY-MM-DD)
-        gomag_df: DataFrame cu date Gomag (optional)
-
-    Returns:
-        BytesIO cu fisierul Excel
     """
     # Obtine datele din Supabase
     gls_parcels = get_gls_parcels_for_period(start_date, end_date)
@@ -322,7 +230,7 @@ def generate_opuri_export(
     netopia_fill = PatternFill(start_color="DAEEF3", end_color="DAEEF3", fill_type="solid")
     error_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
 
-    # Header exact ca in original
+    # Header
     headers = ["Data OP", "Număr OP", "Nume Borderou", "Curier", "Order ID",
                "Număr Factură", "Sumă", "Erori", "Diferență eMag", "Facturi Comision eMag"]
 
@@ -335,14 +243,14 @@ def generate_opuri_export(
     # Ajusteaza latimea coloanelor
     ws.column_dimensions['A'].width = 12
     ws.column_dimensions['B'].width = 20
-    ws.column_dimensions['C'].width = 30
+    ws.column_dimensions['C'].width = 35
     ws.column_dimensions['D'].width = 10
     ws.column_dimensions['E'].width = 12
     ws.column_dimensions['F'].width = 15
     ws.column_dimensions['G'].width = 12
     ws.column_dimensions['H'].width = 8
     ws.column_dimensions['I'].width = 15
-    ws.column_dimensions['J'].width = 20
+    ws.column_dimensions['J'].width = 25
 
     row_num = 2
 
@@ -352,34 +260,47 @@ def generate_opuri_export(
         (sameday_borderouri, "Sameday", sameday_fill)
     ]:
         for borderou in borderouri:
-            # Match parcels with Gomag/Oblio
-            parcels_df, erori = match_parcels_with_gomag_oblio(
-                borderou['parcels'],
-                gomag_df,
-                invoices
-            )
-
+            parcels = borderou['parcels']
             suma_total = borderou['suma_total']
 
-            # Gaseste OP-ul (foloseste curierul pentru matching)
+            # Gaseste OP-ul
             numar_op, data_op = match_op_with_borderou(suma_total, mt940_transactions, curier)
 
-            # Verifica daca sunt erori
-            erori_exist = any(parcels_df['eroare'] == 'DA') if not parcels_df.empty else False
+            # Proceseaza fiecare colet
+            facturi_ok = []
+            facturi_ko = []
+
+            for p in parcels:
+                # Extrage AWB
+                awb = p.get('parcel_number', p.get('awb_number', ''))
+                cod_amount = float(p.get('cod_amount', 0) or 0)
+
+                # Cauta in Gomag
+                order_id, numar_factura = match_awb_with_gomag(awb, gomag_df, curier)
+
+                if numar_factura:
+                    facturi_ok.append({
+                        'awb': awb,
+                        'order_id': order_id,
+                        'numar_factura': numar_factura,
+                        'suma': cod_amount
+                    })
+                else:
+                    facturi_ko.append({
+                        'awb': awb,
+                        'order_id': order_id,
+                        'suma': cod_amount
+                    })
+
+            # Sorteaza facturile dupa numar
+            facturi_ok.sort(key=lambda x: int(x['numar_factura']) if x['numar_factura'].isdigit() else 0)
+
+            erori_exist = len(facturi_ko) > 0
             erori_text = "DA" if erori_exist else "NU"
 
-            # Scrie facturile
+            # Scrie facturile OK
             first_row = True
-            facturi_ok = parcels_df[parcels_df['numar factura'] != ''] if not parcels_df.empty else pd.DataFrame()
-
-            for _, parcel_row in facturi_ok.iterrows():
-                # Converteste numarul facturii la int daca e numeric
-                numar_factura = parcel_row['numar factura']
-                try:
-                    numar_factura = int(float(numar_factura))
-                except:
-                    pass
-
+            for f in facturi_ok:
                 ws.cell(row=row_num, column=1, value=data_op if first_row else "")
                 ws.cell(row=row_num, column=2, value=numar_op if first_row else "")
                 ws.cell(row=row_num, column=3, value=borderou['borderou'] if first_row else "")
@@ -389,9 +310,9 @@ def generate_opuri_export(
                     cell_curier.fill = fill_color
                     cell_curier.font = Font(color="FFFFFF")
 
-                ws.cell(row=row_num, column=5, value=parcel_row['Order ID'])
-                ws.cell(row=row_num, column=6, value=numar_factura)
-                ws.cell(row=row_num, column=7, value=parcel_row['Sumă ramburs'])
+                ws.cell(row=row_num, column=5, value=f['order_id'])
+                ws.cell(row=row_num, column=6, value=int(f['numar_factura']) if f['numar_factura'].isdigit() else f['numar_factura'])
+                ws.cell(row=row_num, column=7, value=f['suma'])
 
                 cell_erori = ws.cell(row=row_num, column=8, value=erori_text if first_row else "")
                 if first_row and erori_exist:
@@ -400,26 +321,27 @@ def generate_opuri_export(
                 first_row = False
                 row_num += 1
 
-            # Daca nu sunt facturi OK, scrie o linie goala
-            if facturi_ok.empty:
+            # Daca nu sunt facturi OK, scrie doar header-ul
+            if not facturi_ok:
                 ws.cell(row=row_num, column=1, value=data_op)
                 ws.cell(row=row_num, column=2, value=numar_op)
                 ws.cell(row=row_num, column=3, value=borderou['borderou'])
                 cell_curier = ws.cell(row=row_num, column=4, value=curier)
                 cell_curier.fill = fill_color
                 cell_curier.font = Font(color="FFFFFF")
-                ws.cell(row=row_num, column=8, value=erori_text)
+                cell_erori = ws.cell(row=row_num, column=8, value=erori_text)
+                if erori_exist:
+                    cell_erori.fill = error_fill
                 row_num += 1
 
             # Scrie AWB-urile fara factura
-            facturi_ko = parcels_df[parcels_df['numar factura'] == ''] if not parcels_df.empty else pd.DataFrame()
-            if not facturi_ko.empty:
+            if facturi_ko:
                 ws.cell(row=row_num, column=6, value="AWB-uri fără factură:")
                 row_num += 1
 
-                for _, parcel_row in facturi_ko.iterrows():
-                    ws.cell(row=row_num, column=6, value=parcel_row['AWB_normalizat'])
-                    ws.cell(row=row_num, column=7, value=parcel_row['Sumă ramburs'])
+                for f in facturi_ko:
+                    ws.cell(row=row_num, column=6, value=f['awb'])
+                    ws.cell(row=row_num, column=7, value=f['suma'])
                     row_num += 1
 
             # Rand total
@@ -435,7 +357,6 @@ def generate_opuri_export(
     # ============================================
     # Proceseaza Netopia
     # ============================================
-    # Grupeaza tranzactiile Netopia pe batch_id din MT940
     netopia_ops = [t for t in mt940_transactions if t.get('source', '').upper() == 'NETOPIA']
 
     for netopia_op in netopia_ops:
@@ -460,7 +381,6 @@ def generate_opuri_export(
         total_facturi = sum(float(t.get('amount', 0) or 0) for t in netopia_trans)
         total_comisioane = sum(float(t.get('fee', 0) or 0) for t in netopia_trans)
 
-        # Daca nu avem tranzactii detaliate, folosim suma OP-ului
         if not netopia_trans:
             total_facturi = suma_op
             total_comisioane = 0
@@ -472,49 +392,56 @@ def generate_opuri_export(
         cell_curier = ws.cell(row=row_num, column=4, value="Netopia")
         cell_curier.fill = netopia_fill
 
-        # Daca avem tranzactii detaliate, le scriem
         first_row = True
         if netopia_trans:
             for trans in netopia_trans:
                 order_id = trans.get('order_id', '')
                 amount = float(trans.get('amount', 0) or 0)
 
-                # Cauta factura pentru order_id
+                # Cauta factura
                 numar_factura = ''
-                if order_id and str(order_id) in [str(inv.get('order_id', '')) for inv in invoices]:
-                    for inv in invoices:
-                        if str(inv.get('order_id', '')) == str(order_id):
-                            numar_factura = inv.get('number', '')
-                            break
+                if gomag_df is not None and not gomag_df.empty and order_id:
+                    gomag_temp = gomag_df.copy()
+                    gomag_temp.columns = gomag_temp.columns.str.strip().str.lower()
+                    match = gomag_temp[gomag_temp['numar comanda'].astype(str) == str(order_id)]
+                    if not match.empty:
+                        nf = match.iloc[0].get('numar factura', '')
+                        if nf and str(nf) != 'nan':
+                            try:
+                                numar_factura = str(int(float(nf)))
+                            except:
+                                numar_factura = str(nf)
 
                 if not first_row:
+                    row_num += 1
                     ws.cell(row=row_num, column=1, value="")
                     ws.cell(row=row_num, column=2, value="")
                     ws.cell(row=row_num, column=3, value="")
                     ws.cell(row=row_num, column=4, value="")
 
                 ws.cell(row=row_num, column=5, value=order_id)
-                ws.cell(row=row_num, column=6, value=numar_factura if numar_factura else "")
+                ws.cell(row=row_num, column=6, value=numar_factura)
                 ws.cell(row=row_num, column=7, value=amount)
                 ws.cell(row=row_num, column=8, value="NU" if numar_factura else "DA")
 
                 first_row = False
-                row_num += 1
+
+        row_num += 1
 
         # Linie Comisioane
         ws.cell(row=row_num, column=6, value="Comisioane:")
-        ws.cell(row=row_num, column=7, value=total_comisioane)
+        ws.cell(row=row_num, column=7, value=round(total_comisioane, 2))
         row_num += 1
 
         # Linie Total facturi
         ws.cell(row=row_num, column=6, value="Total facturi:")
-        ws.cell(row=row_num, column=7, value=total_facturi)
+        ws.cell(row=row_num, column=7, value=round(total_facturi, 2))
         row_num += 1
 
         # Linie Total OP
         ws.cell(row=row_num, column=6, value="Total OP:")
         ws.cell(row=row_num, column=6).font = Font(bold=True)
-        ws.cell(row=row_num, column=7, value=suma_op)
+        ws.cell(row=row_num, column=7, value=round(suma_op, 2))
         ws.cell(row=row_num, column=7).font = Font(bold=True)
         row_num += 1
 
