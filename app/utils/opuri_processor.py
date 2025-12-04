@@ -11,7 +11,7 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
-from .supabase_client import get_client
+from .supabase_client import get_supabase_client as get_client
 
 
 def get_gls_parcels_for_period(start_date: str, end_date: str) -> List[Dict]:
