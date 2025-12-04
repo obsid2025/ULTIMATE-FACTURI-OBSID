@@ -946,32 +946,43 @@ def show_procesare():
     today = date.today()
     first_day_of_month = today.replace(day=1)
 
-    col1, col2, col3 = st.columns([1, 1, 2])
+    # Initialize session state for dates if not set
+    if 'proc_start_val' not in st.session_state:
+        st.session_state.proc_start_val = first_day_of_month
+    if 'proc_end_val' not in st.session_state:
+        st.session_state.proc_end_val = today
+
+    # Quick period buttons FIRST (before date inputs)
+    col_q1, col_q2, col_q3, col_q4 = st.columns(4)
+    with col_q1:
+        if st.button("Luna curenta", key="btn_proc_luna_curenta", use_container_width=True):
+            st.session_state.proc_start_val = first_day_of_month
+            st.session_state.proc_end_val = today
+            st.rerun()
+    with col_q2:
+        if st.button("Luna trecuta", key="btn_proc_luna_trecuta", use_container_width=True):
+            last_month_end = first_day_of_month - timedelta(days=1)
+            last_month_start = last_month_end.replace(day=1)
+            st.session_state.proc_start_val = last_month_start
+            st.session_state.proc_end_val = last_month_end
+            st.rerun()
+    with col_q3:
+        if st.button("Ultimele 60 zile", key="btn_proc_60zile", use_container_width=True):
+            st.session_state.proc_start_val = today - timedelta(days=60)
+            st.session_state.proc_end_val = today
+            st.rerun()
+    with col_q4:
+        if st.button("Tot anul 2024", key="btn_proc_2024", use_container_width=True):
+            st.session_state.proc_start_val = date(2024, 1, 1)
+            st.session_state.proc_end_val = date(2024, 12, 31)
+            st.rerun()
+
+    # Date inputs use session state values
+    col1, col2 = st.columns(2)
     with col1:
-        start_date = st.date_input("De la", value=first_day_of_month, key="proc_start")
+        start_date = st.date_input("De la", value=st.session_state.proc_start_val, key="proc_start")
     with col2:
-        end_date = st.date_input("Pana la", value=today, key="proc_end")
-    with col3:
-        # Quick period buttons
-        st.write("")  # Spacing
-        col_q1, col_q2, col_q3 = st.columns(3)
-        with col_q1:
-            if st.button("Luna curenta", key="btn_proc_luna_curenta", use_container_width=True):
-                st.session_state.proc_start = first_day_of_month
-                st.session_state.proc_end = today
-                st.rerun()
-        with col_q2:
-            if st.button("Luna trecuta", key="btn_proc_luna_trecuta", use_container_width=True):
-                last_month_end = first_day_of_month - timedelta(days=1)
-                last_month_start = last_month_end.replace(day=1)
-                st.session_state.proc_start = last_month_start
-                st.session_state.proc_end = last_month_end
-                st.rerun()
-        with col_q3:
-            if st.button("Ultimele 60 zile", key="btn_proc_60zile", use_container_width=True):
-                st.session_state.proc_start = today - timedelta(days=60)
-                st.session_state.proc_end = today
-                st.rerun()
+        end_date = st.date_input("Pana la", value=st.session_state.proc_end_val, key="proc_end")
 
     st.markdown("---")
 
