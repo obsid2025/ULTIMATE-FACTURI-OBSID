@@ -21,6 +21,10 @@ def get_supabase_client() -> Client:
     return _supabase_client
 
 
+# Alias for backward compatibility
+get_client = get_supabase_client
+
+
 def test_connection() -> bool:
     """Test Supabase connection."""
     try:
