@@ -90,9 +90,9 @@ def get_mt940_transactions_for_period(start_date: str, end_date: str) -> List[Di
 
     try:
         result = client.table("bank_transactions").select("*").gte(
-            "date", start_date
+            "transaction_date", start_date
         ).lte(
-            "date", end_date
+            "transaction_date", end_date
         ).execute()
 
         return result.data or []
@@ -135,10 +135,9 @@ def group_parcels_by_delivery_date(parcels: List[Dict], curier: str) -> List[Dic
             except:
                 borderou_name = f"GLS_{date_str}.xlsx"
         else:
-            # Sameday: different format
+            # Sameday: YYYY-MM-DD-obsid-s r l-cod-ledger-ron.xlsx format
             try:
-                dt = datetime.strptime(date_str, '%Y-%m-%d')
-                borderou_name = f"Sameday_{dt.strftime('%d%m%Y')}.xlsx"
+                borderou_name = f"{date_str}-obsid-s r l-cod-ledger-ron.xlsx"
             except:
                 borderou_name = f"Sameday_{date_str}.xlsx"
 
@@ -248,19 +247,29 @@ def match_parcels_with_gomag_oblio(
     return pd.DataFrame(rezultate), erori
 
 
-def match_op_with_borderou(suma_borderou: float, mt940_transactions: List[Dict]) -> Tuple[str, str]:
+def match_op_with_borderou(suma_borderou: float, mt940_transactions: List[Dict], curier: str) -> Tuple[str, str]:
     """
-    Gaseste OP-ul care se potriveste cu suma borderoului.
+    Gaseste OP-ul care se potriveste cu suma borderoului si curierul.
+
+    Args:
+        suma_borderou: Suma totala a borderoului
+        mt940_transactions: Lista de tranzactii MT940
+        curier: Numele curierului (GLS, Sameday, Netopia)
 
     Returns:
         Tuple (numar_op, data_op)
     """
     for trans in mt940_transactions:
         suma_op = float(trans.get('amount', 0) or 0)
+        source = trans.get('source', '')
+
+        # Verifica daca sursa se potriveste
+        if curier.upper() not in source.upper():
+            continue
 
         # Potrivire cu toleranta de 0.10 RON
         if abs(suma_op - suma_borderou) < 0.10:
-            return trans.get('reference', ''), trans.get('date', '')
+            return trans.get('op_reference', ''), trans.get('transaction_date', '')
 
     return '', ''
 
@@ -352,8 +361,8 @@ def generate_opuri_export(
 
             suma_total = borderou['suma_total']
 
-            # Gaseste OP-ul
-            numar_op, data_op = match_op_with_borderou(suma_total, mt940_transactions)
+            # Gaseste OP-ul (foloseste curierul pentru matching)
+            numar_op, data_op = match_op_with_borderou(suma_total, mt940_transactions, curier)
 
             # Verifica daca sunt erori
             erori_exist = any(parcels_df['eroare'] == 'DA') if not parcels_df.empty else False
@@ -423,7 +432,94 @@ def generate_opuri_export(
             # Rand gol
             row_num += 1
 
-    # TODO: Adauga Netopia si eMag similar
+    # ============================================
+    # Proceseaza Netopia
+    # ============================================
+    # Grupeaza tranzactiile Netopia pe batch_id din MT940
+    netopia_ops = [t for t in mt940_transactions if t.get('source', '').upper() == 'NETOPIA']
+
+    for netopia_op in netopia_ops:
+        batch_id = netopia_op.get('batch_id', '')
+        suma_op = float(netopia_op.get('amount', 0) or 0)
+        numar_op = netopia_op.get('op_reference', '')
+        data_op = netopia_op.get('transaction_date', '')
+
+        # Numele borderoului pentru Netopia
+        borderou_name = f"batchId.{batch_id}.csv" if batch_id else f"Netopia_{data_op}.csv"
+
+        # Obtine tranzactiile Netopia din Supabase pentru acest batch
+        netopia_trans = []
+        if client and batch_id:
+            try:
+                result = client.table("netopia_transactions").select("*").eq("batch_id", batch_id).execute()
+                netopia_trans = result.data or []
+            except:
+                pass
+
+        # Calculeaza comisioane si total facturi
+        total_facturi = sum(float(t.get('amount', 0) or 0) for t in netopia_trans)
+        total_comisioane = sum(float(t.get('fee', 0) or 0) for t in netopia_trans)
+
+        # Daca nu avem tranzactii detaliate, folosim suma OP-ului
+        if not netopia_trans:
+            total_facturi = suma_op
+            total_comisioane = 0
+
+        # Scrie header-ul borderoului Netopia
+        ws.cell(row=row_num, column=1, value=data_op)
+        ws.cell(row=row_num, column=2, value=numar_op)
+        ws.cell(row=row_num, column=3, value=borderou_name)
+        cell_curier = ws.cell(row=row_num, column=4, value="Netopia")
+        cell_curier.fill = netopia_fill
+
+        # Daca avem tranzactii detaliate, le scriem
+        first_row = True
+        if netopia_trans:
+            for trans in netopia_trans:
+                order_id = trans.get('order_id', '')
+                amount = float(trans.get('amount', 0) or 0)
+
+                # Cauta factura pentru order_id
+                numar_factura = ''
+                if order_id and str(order_id) in [str(inv.get('order_id', '')) for inv in invoices]:
+                    for inv in invoices:
+                        if str(inv.get('order_id', '')) == str(order_id):
+                            numar_factura = inv.get('number', '')
+                            break
+
+                if not first_row:
+                    ws.cell(row=row_num, column=1, value="")
+                    ws.cell(row=row_num, column=2, value="")
+                    ws.cell(row=row_num, column=3, value="")
+                    ws.cell(row=row_num, column=4, value="")
+
+                ws.cell(row=row_num, column=5, value=order_id)
+                ws.cell(row=row_num, column=6, value=numar_factura if numar_factura else "")
+                ws.cell(row=row_num, column=7, value=amount)
+                ws.cell(row=row_num, column=8, value="NU" if numar_factura else "DA")
+
+                first_row = False
+                row_num += 1
+
+        # Linie Comisioane
+        ws.cell(row=row_num, column=6, value="Comisioane:")
+        ws.cell(row=row_num, column=7, value=total_comisioane)
+        row_num += 1
+
+        # Linie Total facturi
+        ws.cell(row=row_num, column=6, value="Total facturi:")
+        ws.cell(row=row_num, column=7, value=total_facturi)
+        row_num += 1
+
+        # Linie Total OP
+        ws.cell(row=row_num, column=6, value="Total OP:")
+        ws.cell(row=row_num, column=6).font = Font(bold=True)
+        ws.cell(row=row_num, column=7, value=suma_op)
+        ws.cell(row=row_num, column=7).font = Font(bold=True)
+        row_num += 1
+
+        # Rand gol
+        row_num += 1
 
     # Salveaza in buffer
     buffer = BytesIO()
