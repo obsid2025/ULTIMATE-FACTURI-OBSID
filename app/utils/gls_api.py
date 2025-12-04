@@ -250,22 +250,42 @@ def get_cod_summary_by_date(days_back: int = 30, username: str = None,
     return summary
 
 
+def get_existing_gls_parcels() -> set:
+    """
+    Obtine lista de numere de colete GLS deja existente in Supabase.
+    Folosit pentru a evita re-descarcarea datelor existente.
+    """
+    from .supabase_client import get_client
+
+    client = get_client()
+    if not client:
+        return set()
+
+    try:
+        result = client.table("gls_parcels").select("parcel_number").execute()
+        return {row['parcel_number'] for row in result.data}
+    except Exception as e:
+        print(f"Eroare la citirea coletelor GLS existente: {e}")
+        return set()
+
+
 def save_gls_parcels_to_supabase(parcels: List[Dict], sync_month: str = None) -> Dict:
     """
     Salveaza coletele GLS in Supabase.
+    Sare peste coletele care exista deja (pe baza parcel_number).
 
     Args:
         parcels: Lista de colete
         sync_month: Luna sincronizarii (YYYY-MM)
 
     Returns:
-        Dict cu statistici
+        Dict cu statistici (inserted, skipped, errors)
     """
     from .supabase_client import get_client
 
     stats = {
         "inserted": 0,
-        "updated": 0,
+        "skipped": 0,
         "errors": []
     }
 
@@ -274,10 +294,20 @@ def save_gls_parcels_to_supabase(parcels: List[Dict], sync_month: str = None) ->
         stats["errors"].append("Nu s-a putut conecta la Supabase")
         return stats
 
+    # Obtine coletele existente pentru a le sari
+    existing = get_existing_gls_parcels()
+
     for parcel in parcels:
+        parcel_number = parcel.get("parcel_number", "")
+
+        # Sari peste coletele existente
+        if parcel_number in existing:
+            stats["skipped"] += 1
+            continue
+
         try:
             data = {
-                "parcel_number": parcel.get("parcel_number", ""),
+                "parcel_number": parcel_number,
                 "cod_amount": parcel.get("cod_amount", 0),
                 "cod_currency": parcel.get("cod_currency", "RON"),
                 "cod_reference": parcel.get("cod_reference", ""),
@@ -291,16 +321,13 @@ def save_gls_parcels_to_supabase(parcels: List[Dict], sync_month: str = None) ->
                 "synced_at": datetime.now().isoformat()
             }
 
-            result = client.table("gls_parcels").upsert(
-                data,
-                on_conflict="parcel_number"
-            ).execute()
+            result = client.table("gls_parcels").insert(data).execute()
 
             if result.data:
                 stats["inserted"] += 1
 
         except Exception as e:
-            stats["errors"].append(f"Eroare la colet {parcel.get('parcel_number')}: {str(e)}")
+            stats["errors"].append(f"Eroare la colet {parcel_number}: {str(e)}")
 
     return stats
 

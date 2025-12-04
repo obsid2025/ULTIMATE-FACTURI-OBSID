@@ -881,156 +881,155 @@ def show_dashboard():
 
 
 def show_procesare():
-    """Pagina de procesare facturi."""
+    """Pagina de procesare facturi - Export OP-uri."""
     st.markdown("""
     <div class="page-header">
-        <h1 class="page-title">Procesare Facturi</h1>
-        <p class="page-subtitle">Incarca fisierele necesare pentru reconcilierea facturilor</p>
+        <h1 class="page-title">Export OP-uri</h1>
+        <p class="page-subtitle">Genereaza raportul de facturi grupate pe OP-uri bancare</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Initialize session state
-    if 'uploaded_files' not in st.session_state:
-        st.session_state.uploaded_files = {}
+    # Import processor
+    try:
+        from utils.opuri_processor import generate_opuri_export
+    except ImportError as e:
+        st.error(f"Eroare la import: {e}")
+        return
 
-    # File uploads in columns
-    col1, col2 = st.columns(2)
+    # Show data availability from Supabase
+    from utils.supabase_client import get_client
+    client = get_client()
 
-    with col1:
-        st.markdown("""
-        <div class="section-header">
-            <span class="section-title">Fisiere Obligatorii</span>
-            <div class="section-line"></div>
-        </div>
-        """, unsafe_allow_html=True)
+    if client:
+        try:
+            gls_count = len(client.table("gls_parcels").select("id", count="exact").execute().data)
+            sameday_count = len(client.table("sameday_parcels").select("id", count="exact").execute().data)
+            netopia_count = len(client.table("netopia_transactions").select("id", count="exact").execute().data)
+            invoices_count = len(client.table("invoices").select("id", count="exact").execute().data)
+            mt940_count = len(client.table("bank_transactions").select("id", count="exact").execute().data)
 
-        gomag_file = st.file_uploader(
-            "Fisier Gomag (XLSX)",
-            type=['xlsx'],
-            key="gomag",
-            help="Exportul comenzilor din Gomag"
-        )
+            st.markdown("""
+            <div class="section-header">
+                <span class="section-title">Date Disponibile in Supabase</span>
+                <div class="section-line"></div>
+            </div>
+            """, unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("""
-        <div class="section-header">
-            <span class="section-title">Extras Bancar</span>
-            <div class="section-line"></div>
-        </div>
-        """, unsafe_allow_html=True)
+            col1, col2, col3, col4, col5 = st.columns(5)
+            with col1:
+                st.metric("GLS", gls_count)
+            with col2:
+                st.metric("Sameday", sameday_count)
+            with col3:
+                st.metric("Netopia", netopia_count)
+            with col4:
+                st.metric("Facturi Oblio", invoices_count)
+            with col5:
+                st.metric("Tranzactii MT940", mt940_count)
 
-        mt940_files = st.file_uploader(
-            "Fisiere MT940 (TXT)",
-            type=['txt'],
-            accept_multiple_files=True,
-            key="mt940",
-            help="Extrasele bancare MT940 de la Banca Transilvania"
-        )
-
-        # Info box about automatic sync
-        st.markdown("""
-        <div class="section-header">
-            <span class="section-title">Date Automate</span>
-            <div class="section-line"></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.info("""
-        **Datele se sincronizeaza automat** din pagina **Sincronizare Date**:
-        - **GLS**: colete cu ramburs din API MyGLS
-        - **Sameday**: colete cu ramburs din API Sameday
-        - **Netopia**: rapoartele se descarca automat din email
-        - **Oblio**: facturile se sincronizeaza direct din API
-        """)
+            if gls_count == 0 and sameday_count == 0:
+                st.warning("Nu exista date in Supabase. Mergi la **Sincronizare Date** pentru a descarca datele.")
+        except Exception as e:
+            st.warning(f"Nu s-a putut verifica baza de date: {e}")
 
     st.markdown("---")
 
-    # Process button
-    can_process = gomag_file is not None and len(mt940_files) > 0
+    # Period selection
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Selecteaza Perioada</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    if not can_process:
-        st.warning("Incarca cel putin: Fisier Gomag si Fisiere MT940")
+    from datetime import date, timedelta
+    today = date.today()
+    first_day_of_month = today.replace(day=1)
 
-    if st.button("Proceseaza Facturile", disabled=not can_process, use_container_width=True):
-        with st.spinner("Se proceseaza..."):
-            process_files(gomag_file, mt940_files)
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        start_date = st.date_input("De la", value=first_day_of_month, key="proc_start")
+    with col2:
+        end_date = st.date_input("Pana la", value=today, key="proc_end")
+    with col3:
+        # Quick period buttons
+        st.write("")  # Spacing
+        col_q1, col_q2, col_q3 = st.columns(3)
+        with col_q1:
+            if st.button("Luna curenta", key="btn_proc_luna_curenta", use_container_width=True):
+                st.session_state.proc_start = first_day_of_month
+                st.session_state.proc_end = today
+                st.rerun()
+        with col_q2:
+            if st.button("Luna trecuta", key="btn_proc_luna_trecuta", use_container_width=True):
+                last_month_end = first_day_of_month - timedelta(days=1)
+                last_month_start = last_month_end.replace(day=1)
+                st.session_state.proc_start = last_month_start
+                st.session_state.proc_end = last_month_end
+                st.rerun()
+        with col_q3:
+            if st.button("Ultimele 60 zile", key="btn_proc_60zile", use_container_width=True):
+                st.session_state.proc_start = today - timedelta(days=60)
+                st.session_state.proc_end = today
+                st.rerun()
+
+    st.markdown("---")
+
+    # Optional Gomag file
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Fisier Gomag (Optional)</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.info("Fisierul Gomag este folosit pentru a potrivi AWB-urile cu Order ID-urile. Daca nu il incarci, Order ID-urile vor fi goale.")
+
+    gomag_file = st.file_uploader(
+        "Fisier Gomag (XLSX)",
+        type=['xlsx'],
+        key="gomag",
+        help="Exportul comenzilor din Gomag"
+    )
+
+    st.markdown("---")
+
+    # Generate button
+    if st.button("GENEREAZA EXPORT OP-URI", use_container_width=True, type="primary"):
+        with st.spinner("Se genereaza raportul..."):
+            try:
+                # Read Gomag if provided
+                gomag_df = None
+                if gomag_file:
+                    gomag_df = pd.read_excel(gomag_file, dtype=str)
+                    st.info(f"Gomag incarcat: {len(gomag_df)} randuri")
+
+                # Generate export
+                excel_buffer = generate_opuri_export(
+                    start_date.strftime('%Y-%m-%d'),
+                    end_date.strftime('%Y-%m-%d'),
+                    gomag_df
+                )
+
+                st.success("Export generat cu succes!")
+
+                # Download button
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                st.download_button(
+                    label="DESCARCA RAPORT EXCEL",
+                    data=excel_buffer,
+                    file_name=f"opuri_export_{timestamp}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                    type="primary"
+                )
+            except Exception as e:
+                st.error(f"Eroare la generare: {str(e)}")
+                import traceback
+                st.code(traceback.format_exc())
 
 
-def process_files(gomag_file, mt940_files):
-    """Proceseaza fisierele incarcate (Gomag + MT940).
-
-    NOTE: GLS, Sameday si Netopia se sincronizeaza automat din API-uri
-    in pagina 'Sincronizare Date'. Aceasta functie proceseaza doar
-    datele locale pentru matching cu comenzile Gomag.
-    """
-    progress = st.progress(0)
-    status = st.empty()
-
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            status.text("Salvez fisierele temporar...")
-            progress.progress(10)
-
-            # Gomag
-            gomag_path = os.path.join(tmpdir, "gomag.xlsx")
-            with open(gomag_path, 'wb') as f:
-                f.write(gomag_file.getbuffer())
-            gomag_df = pd.read_excel(gomag_path, dtype=str)
-
-            # MT940 folder
-            mt940_folder = os.path.join(tmpdir, "mt940")
-            os.makedirs(mt940_folder, exist_ok=True)
-            for mt_file in mt940_files:
-                with open(os.path.join(mt940_folder, mt_file.name), 'wb') as f:
-                    f.write(mt_file.getbuffer())
-
-            progress.progress(40)
-            status.text("Procesez incasarile MT940...")
-
-            incasari_mt940 = extrage_referinte_op_din_mt940_folder(mt940_folder)
-            st.session_state['incasari_mt940'] = incasari_mt940
-
-            progress.progress(80)
-            status.text("Generez raportul Excel...")
-
-            # Generate simplified Excel with MT940 data only
-            # GLS, Sameday, Netopia data comes from API sync
-            excel_buffer = genereaza_export_excel(
-                [],  # GLS - now from API
-                [],  # Sameday - now from API
-                [],  # Netopia - now from API
-                incasari_mt940
-            )
-
-            progress.progress(100)
-            status.text("Procesare finalizata!")
-
-            st.success("Procesare finalizata cu succes!")
-
-            # Statistics
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Incasari MT940", len(incasari_mt940))
-            with col2:
-                total_suma = sum(i[1] for i in incasari_mt940)
-                st.metric("Total Incasari", f"{total_suma:,.2f} RON")
-
-            st.info("**Nota:** Datele GLS, Sameday si Netopia se sincronizeaza automat din API-uri in pagina 'Sincronizare Date'.")
-
-            # Download
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            st.download_button(
-                label="Descarca Raportul Excel",
-                data=excel_buffer,
-                file_name=f"facturi_grupate_{timestamp}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
-
-    except Exception as e:
-        st.error(f"Eroare la procesare: {str(e)}")
-        import traceback
-        st.code(traceback.format_exc())
+# NOTE: process_files function removed - now using opuri_processor.generate_opuri_export()
 
 
 def show_incasari():
@@ -1296,11 +1295,15 @@ def show_data_sync():
     st.markdown("""
     <div class="page-header">
         <h1 class="page-title">Sincronizare Date</h1>
-        <p class="page-subtitle">Import MT940, sincronizare Oblio si Netopia cu Supabase</p>
+        <p class="page-subtitle">Sincronizare automata GLS, Sameday, Netopia, Oblio din API-uri</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Import Netopia/IMAP modules
+    # Import all required modules
+    imap_available = False
+    gls_available = False
+    sameday_available = False
+
     try:
         from utils.email_imap import is_imap_configured, test_imap_connection, get_all_netopia_batch_ids
         from utils.netopia_api import (
@@ -1313,36 +1316,31 @@ def show_data_sync():
         )
         imap_available = True
     except ImportError as e:
-        imap_available = False
-        st.warning(f"Modulele IMAP/Netopia nu sunt disponibile: {e}")
+        pass
 
-    # Import GLS API module
     try:
         from utils.gls_api import (
             is_gls_configured,
             test_gls_connection,
             get_delivered_parcels_with_cod,
             save_gls_parcels_to_supabase,
-            get_cod_summary_by_date
+            get_existing_gls_parcels
         )
         gls_available = True
     except ImportError as e:
-        gls_available = False
-        st.warning(f"Modulul GLS API nu este disponibil: {e}")
+        pass
 
-    # Import Sameday API module
     try:
         from utils.sameday_api import (
             is_sameday_configured,
             test_sameday_connection,
             get_sameday_deliveries_with_cod as get_sameday_parcels,
             save_sameday_parcels_to_supabase,
-            get_cod_summary_by_date as get_sameday_cod_summary
+            get_existing_sameday_parcels
         )
         sameday_available = True
     except ImportError as e:
-        sameday_available = False
-        st.warning(f"Modulul Sameday API nu este disponibil: {e}")
+        pass
 
     # Connection status
     st.markdown("""
@@ -1410,444 +1408,214 @@ def show_data_sync():
 
     st.markdown("---")
 
-    # Two columns for sync options
-    col1, col2 = st.columns(2)
+    # ============================================
+    # SINCRONIZARE TOTALA - Un singur buton pentru tot
+    # ============================================
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Sincronizare Totala (Recomandat)</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    with col1:
-        st.markdown("""
-        <div class="section-header">
-            <span class="section-title">Import MT940</span>
-            <div class="section-line"></div>
-        </div>
-        """, unsafe_allow_html=True)
+    st.info("""
+    **Un singur click sincronizeaza toate sursele de date:**
+    - **GLS**: Colete livrate cu ramburs (ultimele 60 zile)
+    - **Sameday**: Colete livrate cu ramburs (ultimele 30 zile)
+    - **Netopia**: Rapoarte de decontare din email (ultimele 60 zile)
+    - **Oblio**: Facturi emise (ultimele 60 zile)
 
-        st.info("Importa tranzactiile bancare din fisierele MT940 in Supabase. Duplicatele sunt ignorate automat.")
+    **Duplicatele sunt ignorate automat** - datele existente nu se suprascriu.
+    """)
 
-        mt940_folder = st.text_input(
-            "Folder MT940",
-            value="",
-            placeholder="C:\\path\\to\\mt940\\files",
-            key="sync_mt940_folder"
-        )
+    # Show existing data counts
+    from utils.supabase_client import get_client
+    client = get_client()
+    if client:
+        try:
+            gls_count = len(client.table("gls_parcels").select("id", count="exact").execute().data)
+            sameday_count = len(client.table("sameday_parcels").select("id", count="exact").execute().data)
+            netopia_count = len(client.table("netopia_transactions").select("id", count="exact").execute().data)
+            invoices_count = len(client.table("invoices").select("id", count="exact").execute().data)
 
-        mt940_files_upload = st.file_uploader(
-            "Sau incarca fisiere MT940",
-            type=['txt'],
-            accept_multiple_files=True,
-            key="sync_mt940_files"
-        )
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Colete GLS", gls_count)
+            with col2:
+                st.metric("Colete Sameday", sameday_count)
+            with col3:
+                st.metric("Tranzactii Netopia", netopia_count)
+            with col4:
+                st.metric("Facturi Oblio", invoices_count)
+        except:
+            pass
 
-        if st.button("Import MT940", key="btn_import_mt940", use_container_width=True, disabled=not supabase_ok):
-            if mt940_files_upload:
-                with st.spinner("Se importa tranzactiile..."):
-                    try:
-                        with tempfile.TemporaryDirectory() as tmpdir:
-                            file_names = []
-                            for mt_file in mt940_files_upload:
-                                file_path = os.path.join(tmpdir, mt_file.name)
-                                with open(file_path, 'wb') as f:
-                                    f.write(mt_file.getbuffer())
-                                file_names.append(mt_file.name)
+    from datetime import date, timedelta
 
-                            stats = import_mt940_to_supabase(tmpdir, file_names)
+    if st.button("SINCRONIZARE TOTALA", key="btn_sync_all", use_container_width=True, type="primary"):
+        progress = st.progress(0)
+        status = st.empty()
+        results = st.container()
 
-                        st.success(f"Import finalizat!")
-                        col_a, col_b, col_c = st.columns(3)
-                        with col_a:
-                            st.metric("Procesate", stats['processed'])
-                        with col_b:
-                            st.metric("Inserate", stats['inserted'])
-                        with col_c:
-                            st.metric("Ignorate (duplicate)", stats['skipped'])
+        total_stats = {
+            'gls_inserted': 0, 'gls_skipped': 0,
+            'sameday_inserted': 0, 'sameday_skipped': 0,
+            'netopia_inserted': 0, 'netopia_skipped': 0,
+            'oblio_inserted': 0,
+            'errors': []
+        }
 
-                        if stats['errors']:
-                            with st.expander(f"Erori ({len(stats['errors'])})"):
-                                for err in stats['errors'][:10]:
-                                    st.warning(err)
-                    except Exception as e:
-                        st.error(f"Eroare la import: {str(e)}")
-            elif mt940_folder:
-                with st.spinner("Se importa tranzactiile..."):
-                    try:
-                        stats = import_mt940_to_supabase(mt940_folder)
-                        st.success(f"Import finalizat!")
-                        col_a, col_b, col_c = st.columns(3)
-                        with col_a:
-                            st.metric("Procesate", stats['processed'])
-                        with col_b:
-                            st.metric("Inserate", stats['inserted'])
-                        with col_c:
-                            st.metric("Ignorate (duplicate)", stats['skipped'])
-                    except Exception as e:
-                        st.error(f"Eroare la import: {str(e)}")
-            else:
-                st.warning("Selecteaza un folder sau incarca fisiere MT940")
+        # 1. Sincronizare GLS (25%)
+        if gls_available and is_gls_configured():
+            status.text("Sincronizare GLS...")
+            try:
+                parcels = get_delivered_parcels_with_cod(days_back=60)
+                if parcels:
+                    stats = save_gls_parcels_to_supabase(parcels)
+                    total_stats['gls_inserted'] = stats.get('inserted', 0)
+                    total_stats['gls_skipped'] = stats.get('skipped', 0)
+                    total_stats['errors'].extend(stats.get('errors', []))
+            except Exception as e:
+                total_stats['errors'].append(f"GLS: {str(e)}")
+        progress.progress(25)
 
-    with col2:
-        st.markdown("""
-        <div class="section-header">
-            <span class="section-title">Sincronizare Oblio</span>
-            <div class="section-line"></div>
-        </div>
-        """, unsafe_allow_html=True)
+        # 2. Sincronizare Sameday (50%)
+        if sameday_available and is_sameday_configured():
+            status.text("Sincronizare Sameday (poate dura cateva minute)...")
+            try:
+                parcels = get_sameday_parcels(days_back=30)
+                if parcels:
+                    stats = save_sameday_parcels_to_supabase(parcels)
+                    total_stats['sameday_inserted'] = stats.get('inserted', 0)
+                    total_stats['sameday_skipped'] = stats.get('skipped', 0)
+                    total_stats['errors'].extend(stats.get('errors', []))
+            except Exception as e:
+                total_stats['errors'].append(f"Sameday: {str(e)}")
+        progress.progress(50)
 
-        st.info("Sincronizeaza facturile din Oblio API in Supabase. Facturile existente sunt actualizate automat.")
+        # 3. Sincronizare Netopia (75%)
+        if imap_available and is_imap_configured():
+            status.text("Sincronizare Netopia din email...")
+            try:
+                batch_ids = get_all_netopia_batch_ids(days_back=60)
+                netopia_key = os.getenv('NETOPIA_API_KEY', '')
+                if batch_ids and netopia_key:
+                    for batch in batch_ids:
+                        batch_id = batch['batch_id']
+                        if is_batch_already_synced(batch_id):
+                            total_stats['netopia_skipped'] += 1
+                            continue
 
-        from datetime import date, timedelta
-        default_start = date.today() - timedelta(days=30)
+                        result = sync_netopia_batch(batch.get('report_id', batch_id), netopia_key)
+                        if result['success']:
+                            save_netopia_transactions_to_supabase(
+                                result['transactions'],
+                                batch_id,
+                                batch.get('report_month', '')
+                            )
+                            save_netopia_batch_to_supabase({
+                                'batch_id': batch_id,
+                                'report_id': batch.get('report_id', batch_id),
+                                'date': batch.get('date', ''),
+                                'subject': batch.get('subject', ''),
+                                'report_month': batch.get('report_month', ''),
+                                'count': result['count'],
+                                'total_amount': result['total_amount'],
+                                'total_fees': result['total_fees'],
+                                'net_amount': result['net_amount']
+                            })
+                            total_stats['netopia_inserted'] += 1
+            except Exception as e:
+                total_stats['errors'].append(f"Netopia: {str(e)}")
+        progress.progress(75)
 
-        col_date1, col_date2 = st.columns(2)
-        with col_date1:
-            oblio_start = st.date_input("De la data", value=default_start, key="oblio_start")
-        with col_date2:
-            oblio_end = st.date_input("Pana la data", value=date.today(), key="oblio_end")
+        # 4. Sincronizare Oblio (100%)
+        if oblio_ok:
+            status.text("Sincronizare Oblio...")
+            try:
+                oblio_start = date.today() - timedelta(days=60)
+                oblio_end = date.today()
+                stats = sync_oblio_invoices(oblio_start, oblio_end)
+                total_stats['oblio_inserted'] = stats.get('inserted', 0)
+                total_stats['errors'].extend(stats.get('errors', []))
+            except Exception as e:
+                total_stats['errors'].append(f"Oblio: {str(e)}")
+        progress.progress(100)
 
-        if st.button("Sincronizeaza Oblio", key="btn_sync_oblio", use_container_width=True, disabled=not (supabase_ok and oblio_ok)):
-            with st.spinner("Se sincronizeaza facturile..."):
+        status.text("Sincronizare completa!")
+
+        # Display results
+        with results:
+            st.success("Sincronizare finalizata!")
+
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("GLS", f"+{total_stats['gls_inserted']}", f"{total_stats['gls_skipped']} existente")
+            with col2:
+                st.metric("Sameday", f"+{total_stats['sameday_inserted']}", f"{total_stats['sameday_skipped']} existente")
+            with col3:
+                st.metric("Netopia", f"+{total_stats['netopia_inserted']}", f"{total_stats['netopia_skipped']} existente")
+            with col4:
+                st.metric("Oblio", f"+{total_stats['oblio_inserted']}")
+
+            if total_stats['errors']:
+                with st.expander(f"Erori ({len(total_stats['errors'])})"):
+                    for err in total_stats['errors'][:20]:
+                        st.warning(err)
+
+    st.markdown("---")
+
+    # ============================================
+    # Import MT940 - Separat pentru ca e din fisiere locale
+    # ============================================
+    st.markdown("""
+    <div class="section-header">
+        <span class="section-title">Import MT940 (Extrase Bancare)</span>
+        <div class="section-line"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.info("Importa tranzactiile bancare din fisierele MT940. Acestea sunt necesare pentru gruparea facturilor pe OP-uri.")
+
+    mt940_files_upload = st.file_uploader(
+        "Incarca fisiere MT940 (TXT)",
+        type=['txt'],
+        accept_multiple_files=True,
+        key="sync_mt940_files"
+    )
+
+    if st.button("Import MT940", key="btn_import_mt940", use_container_width=True, disabled=not supabase_ok):
+        if mt940_files_upload:
+            with st.spinner("Se importa tranzactiile..."):
                 try:
-                    stats = sync_oblio_invoices(oblio_start, oblio_end)
-                    st.success(f"Sincronizare finalizata!")
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        file_names = []
+                        for mt_file in mt940_files_upload:
+                            file_path = os.path.join(tmpdir, mt_file.name)
+                            with open(file_path, 'wb') as f:
+                                f.write(mt_file.getbuffer())
+                            file_names.append(mt_file.name)
+
+                        stats = import_mt940_to_supabase(tmpdir, file_names)
+
+                    st.success(f"Import finalizat!")
                     col_a, col_b, col_c = st.columns(3)
                     with col_a:
                         st.metric("Procesate", stats['processed'])
                     with col_b:
-                        st.metric("Inserate/Actualizate", stats['inserted'])
+                        st.metric("Inserate", stats['inserted'])
                     with col_c:
-                        st.metric("Erori", stats['failed'])
+                        st.metric("Ignorate (duplicate)", stats['skipped'])
 
                     if stats['errors']:
                         with st.expander(f"Erori ({len(stats['errors'])})"):
                             for err in stats['errors'][:10]:
                                 st.warning(err)
                 except Exception as e:
-                    st.error(f"Eroare la sincronizare: {str(e)}")
+                    st.error(f"Eroare la import: {str(e)}")
+        else:
+            st.warning("Incarca fisiere MT940 pentru import")
 
-    # GLS sync section
-    st.markdown("---")
-    st.markdown("""
-    <div class="section-header">
-        <span class="section-title">Sincronizare GLS (API MyGLS)</span>
-        <div class="section-line"></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if gls_available:
-        st.info("Sincronizeaza automat coletele livrate cu ramburs din API-ul MyGLS Romania.")
-
-        col_gls1, col_gls2 = st.columns(2)
-
-        with col_gls1:
-            # GLS credentials
-            gls_client = st.text_input(
-                "Client Number",
-                value=os.getenv('GLS_CLIENT_NUMBER', ''),
-                key="gls_client_number"
-            )
-            gls_user = st.text_input(
-                "Username (email)",
-                value=os.getenv('GLS_USERNAME', ''),
-                key="gls_username"
-            )
-            gls_pass = st.text_input(
-                "Password",
-                value=os.getenv('GLS_PASSWORD', ''),
-                type="password",
-                key="gls_password"
-            )
-
-            gls_days = st.slider("Cauta in ultimele N zile", min_value=7, max_value=90, value=30, key="gls_days")
-
-        with col_gls2:
-            if st.button("Cauta Colete GLS", key="btn_search_gls", use_container_width=True):
-                if not all([gls_client, gls_user, gls_pass]):
-                    st.error("Completeaza toate credentialele GLS")
-                else:
-                    with st.spinner("Se cauta colete GLS livrate..."):
-                        try:
-                            parcels = get_delivered_parcels_with_cod(
-                                days_back=gls_days,
-                                username=gls_user,
-                                password=gls_pass,
-                                client_number=gls_client
-                            )
-                            st.session_state['gls_parcels'] = parcels
-                            if parcels:
-                                total_cod = sum(p.get('cod_amount', 0) for p in parcels)
-                                st.success(f"S-au gasit {len(parcels)} colete livrate cu COD, total: {total_cod:,.2f} RON")
-                            else:
-                                st.warning("Nu s-au gasit colete livrate in perioada selectata")
-                        except Exception as e:
-                            st.error(f"Eroare la cautare GLS: {str(e)}")
-
-            # Show found parcels
-            gls_parcels = st.session_state.get('gls_parcels', [])
-            if gls_parcels:
-                # Group by delivery date
-                by_date = {}
-                for p in gls_parcels:
-                    date_str = p.get('delivery_date_str', 'Necunoscut')
-                    if date_str not in by_date:
-                        by_date[date_str] = []
-                    by_date[date_str].append(p)
-
-                st.write(f"**Colete gasite ({len(gls_parcels)}):**")
-
-                for date_str, date_parcels in sorted(by_date.items(), reverse=True):
-                    date_total = sum(p.get('cod_amount', 0) for p in date_parcels)
-                    with st.expander(f"{date_str}: {len(date_parcels)} colete, {date_total:,.2f} RON"):
-                        for p in date_parcels[:10]:
-                            st.write(f"• {p['parcel_number']} - {p['recipient_name']} - **{p['cod_amount']:.2f} RON**")
-                        if len(date_parcels) > 10:
-                            st.write(f"... si alte {len(date_parcels) - 10} colete")
-
-                if st.button("Salveaza in Supabase", key="btn_save_gls", use_container_width=True, type="primary"):
-                    with st.spinner("Se salveaza coletele GLS..."):
-                        try:
-                            from datetime import datetime
-                            sync_month = datetime.now().strftime("%Y-%m")
-                            stats = save_gls_parcels_to_supabase(gls_parcels, sync_month)
-                            st.success(f"Salvate {stats['inserted']} colete in Supabase")
-                            if stats['errors']:
-                                with st.expander(f"Erori ({len(stats['errors'])})"):
-                                    for err in stats['errors'][:10]:
-                                        st.warning(err)
-                        except Exception as e:
-                            st.error(f"Eroare la salvare: {str(e)}")
-    else:
-        st.warning("Modulul GLS API nu este disponibil")
-
-    # Sameday sync section
-    st.markdown("---")
-    st.markdown("""
-    <div class="section-header">
-        <span class="section-title">Sincronizare Sameday Courier (API)</span>
-        <div class="section-line"></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if sameday_available:
-        st.info("Sincronizeaza automat coletele livrate cu ramburs din API-ul Sameday Courier. NOTA: Cautarea poate dura mai mult deoarece API-ul permite doar intervale de 2 ore.")
-
-        col_sd1, col_sd2 = st.columns(2)
-
-        with col_sd1:
-            # Sameday credentials
-            sameday_user = st.text_input(
-                "Username (email)",
-                value=os.getenv('SAMEDAY_USERNAME', ''),
-                key="sameday_username"
-            )
-            sameday_pass = st.text_input(
-                "Password",
-                value=os.getenv('SAMEDAY_PASSWORD', ''),
-                type="password",
-                key="sameday_password"
-            )
-
-            sameday_days = st.slider("Cauta in ultimele N zile", min_value=1, max_value=30, value=7, key="sameday_days",
-                                      help="API-ul Sameday permite doar intervale de 2 ore, deci cautarea poate dura mai mult pentru perioade mari")
-
-        with col_sd2:
-            if st.button("Cauta Colete Sameday", key="btn_search_sameday", use_container_width=True):
-                if not all([sameday_user, sameday_pass]):
-                    st.error("Completeaza toate credentialele Sameday")
-                else:
-                    with st.spinner(f"Se cauta colete Sameday livrate (aceasta poate dura cateva minute)..."):
-                        try:
-                            parcels = get_sameday_parcels(
-                                days_back=sameday_days,
-                                username=sameday_user,
-                                password=sameday_pass
-                            )
-                            st.session_state['sameday_parcels'] = parcels
-                            if parcels:
-                                total_cod = sum(p.get('cod_amount', 0) for p in parcels)
-                                st.success(f"S-au gasit {len(parcels)} colete livrate cu COD, total: {total_cod:,.2f} RON")
-                            else:
-                                st.warning("Nu s-au gasit colete livrate cu COD in perioada selectata")
-                        except Exception as e:
-                            st.error(f"Eroare la cautare Sameday: {str(e)}")
-
-            # Show found parcels
-            sameday_parcels = st.session_state.get('sameday_parcels', [])
-            if sameday_parcels:
-                # Group by delivery date
-                by_date = {}
-                for p in sameday_parcels:
-                    date_str = p.get('delivery_date', 'Necunoscut')
-                    if date_str not in by_date:
-                        by_date[date_str] = []
-                    by_date[date_str].append(p)
-
-                st.write(f"**Colete gasite ({len(sameday_parcels)}):**")
-
-                for date_str, date_parcels in sorted(by_date.items(), reverse=True):
-                    date_total = sum(p.get('cod_amount', 0) for p in date_parcels)
-                    with st.expander(f"{date_str}: {len(date_parcels)} colete, {date_total:,.2f} RON"):
-                        for p in date_parcels[:10]:
-                            st.write(f"• {p['awb_number']} - {p.get('county', 'N/A')} - **{p['cod_amount']:.2f} RON**")
-                        if len(date_parcels) > 10:
-                            st.write(f"... si alte {len(date_parcels) - 10} colete")
-
-                if st.button("Salveaza in Supabase", key="btn_save_sameday", use_container_width=True, type="primary"):
-                    with st.spinner("Se salveaza coletele Sameday..."):
-                        try:
-                            from datetime import datetime
-                            sync_month = datetime.now().strftime("%Y-%m")
-                            stats = save_sameday_parcels_to_supabase(sameday_parcels, sync_month)
-                            st.success(f"Salvate {stats['inserted']} colete in Supabase")
-                            if stats['errors']:
-                                with st.expander(f"Erori ({len(stats['errors'])})"):
-                                    for err in stats['errors'][:10]:
-                                        st.warning(err)
-                        except Exception as e:
-                            st.error(f"Eroare la salvare: {str(e)}")
-    else:
-        st.warning("Modulul Sameday API nu este disponibil")
-
-    # Netopia sync section
-    st.markdown("---")
-    st.markdown("""
-    <div class="section-header">
-        <span class="section-title">Sincronizare Netopia (Automat din Email)</span>
-        <div class="section-line"></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if imap_available and is_imap_configured():
-        st.info("Cauta automat email-urile de la Netopia cu rapoarte de decontare din documente@obsid.ro si importa tranzactiile.")
-
-        col_net1, col_net2 = st.columns(2)
-
-        with col_net1:
-            # Fetch batch IDs from IMAP
-            days_back = st.slider("Cauta in ultimele N zile", min_value=7, max_value=90, value=30, key="netopia_days")
-
-            if st.button("Cauta Rapoarte Netopia", key="btn_search_netopia", use_container_width=True):
-                with st.spinner("Se cauta email-uri Netopia..."):
-                    try:
-                        batch_ids = get_all_netopia_batch_ids(days_back=days_back)
-                        st.session_state['netopia_batches'] = batch_ids
-                        if batch_ids:
-                            st.success(f"S-au gasit {len(batch_ids)} rapoarte Netopia")
-                        else:
-                            st.warning("Nu s-au gasit rapoarte Netopia in perioada selectata")
-                    except Exception as e:
-                        st.error(f"Eroare la cautare: {str(e)}")
-
-        with col_net2:
-            # Show found batches and sync button
-            batches = st.session_state.get('netopia_batches', [])
-
-            if batches:
-                # Group batches by month for display
-                batches_by_month = {}
-                for batch in batches:
-                    month = batch.get('report_month', 'Necunoscut')
-                    if month not in batches_by_month:
-                        batches_by_month[month] = []
-                    batches_by_month[month].append(batch)
-
-                st.write("**Rapoarte gasite (grupate pe luni):**")
-
-                # Display grouped by month
-                for month, month_batches in sorted(batches_by_month.items(), reverse=True):
-                    # Check which are already synced
-                    synced_batches = get_synced_batches_for_month(month) if imap_available else []
-
-                    with st.expander(f"Luna {month} ({len(month_batches)} rapoarte)", expanded=(month == list(sorted(batches_by_month.keys(), reverse=True))[0])):
-                        for batch in month_batches:
-                            batch_date = batch.get('date', '')[:25] if batch.get('date') else 'N/A'
-                            is_synced = batch['batch_id'] in synced_batches
-
-                            if is_synced:
-                                st.write(f"✅ BatchId: **{batch['batch_id']}** - {batch_date} (deja sincronizat)")
-                            else:
-                                st.write(f"⏳ BatchId: **{batch['batch_id']}** - {batch_date}")
-
-                # Netopia API Key input
-                netopia_key = st.text_input(
-                    "Netopia API Key",
-                    value=os.getenv('NETOPIA_API_KEY', ''),
-                    type="password",
-                    key="netopia_api_key"
-                )
-
-                # Option to skip already synced
-                skip_synced = st.checkbox("Sareste rapoartele deja sincronizate", value=True, key="skip_synced")
-
-                if st.button("Sincronizeaza Toate", key="btn_sync_all_netopia", use_container_width=True, type="primary"):
-                    if not netopia_key:
-                        st.error("Introdu Netopia API Key")
-                    else:
-                        progress = st.progress(0)
-                        status = st.empty()
-
-                        total_transactions = 0
-                        total_amount = 0
-                        skipped_count = 0
-                        errors = []
-
-                        for i, batch in enumerate(batches):
-                            batch_id = batch['batch_id']
-                            report_id = batch.get('report_id', batch_id)
-                            report_month = batch.get('report_month', '')
-
-                            # Check if already synced
-                            if skip_synced and is_batch_already_synced(batch_id):
-                                skipped_count += 1
-                                progress.progress((i + 1) / len(batches))
-                                continue
-
-                            status.text(f"Se sincronizeaza BatchId {batch_id} (Luna {report_month})...")
-                            progress.progress((i + 1) / len(batches))
-
-                            try:
-                                result = sync_netopia_batch(report_id, netopia_key)
-                                if result['success']:
-                                    # Save transactions to Supabase
-                                    save_stats = save_netopia_transactions_to_supabase(
-                                        result['transactions'],
-                                        batch_id,
-                                        report_month
-                                    )
-
-                                    # Save batch info
-                                    batch_info = {
-                                        'batch_id': batch_id,
-                                        'report_id': report_id,
-                                        'date': batch.get('date', ''),
-                                        'subject': batch.get('subject', ''),
-                                        'report_month': report_month,
-                                        'count': result['count'],
-                                        'total_amount': result['total_amount'],
-                                        'total_fees': result['total_fees'],
-                                        'net_amount': result['net_amount']
-                                    }
-                                    save_netopia_batch_to_supabase(batch_info)
-
-                                    total_transactions += result['count']
-                                    total_amount += result['total_amount']
-                                else:
-                                    errors.append(f"BatchId {batch_id}: {result['error']}")
-                            except Exception as e:
-                                errors.append(f"BatchId {batch_id}: {str(e)}")
-
-                        progress.progress(100)
-                        status.text("Sincronizare completa!")
-
-                        st.success(f"Sincronizate {total_transactions} tranzactii, total {total_amount:,.2f} RON")
-                        if skipped_count > 0:
-                            st.info(f"Sarite {skipped_count} rapoarte (deja sincronizate)")
-
-                        if errors:
-                            with st.expander(f"Erori ({len(errors)})"):
-                                for err in errors:
-                                    st.warning(err)
-            else:
-                st.info("Apasa 'Cauta Rapoarte Netopia' pentru a gasi rapoartele din email")
-    else:
-        st.warning("Configureaza IMAP in fisierul .env (IMAP_SERVER, IMAP_USER, IMAP_PASSWORD)")
 
     # Sync logs
     st.markdown("---")

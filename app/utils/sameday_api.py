@@ -286,22 +286,42 @@ def get_cod_summary_by_date(days_back: int = 30, username: str = None,
     return summary
 
 
+def get_existing_sameday_parcels() -> set:
+    """
+    Obtine lista de AWB-uri Sameday deja existente in Supabase.
+    Folosit pentru a evita re-descarcarea datelor existente.
+    """
+    from .supabase_client import get_client
+
+    client = get_client()
+    if not client:
+        return set()
+
+    try:
+        result = client.table("sameday_parcels").select("awb_number").execute()
+        return {row['awb_number'] for row in result.data}
+    except Exception as e:
+        print(f"Eroare la citirea AWB-urilor Sameday existente: {e}")
+        return set()
+
+
 def save_sameday_parcels_to_supabase(parcels: List[Dict], sync_month: str = None) -> Dict:
     """
     Salveaza coletele Sameday in Supabase.
+    Sare peste coletele care exista deja (pe baza awb_number).
 
     Args:
         parcels: Lista de colete
         sync_month: Luna sincronizarii (YYYY-MM)
 
     Returns:
-        Dict cu statistici
+        Dict cu statistici (inserted, skipped, errors)
     """
     from .supabase_client import get_client
 
     stats = {
         'inserted': 0,
-        'updated': 0,
+        'skipped': 0,
         'errors': []
     }
 
@@ -310,10 +330,20 @@ def save_sameday_parcels_to_supabase(parcels: List[Dict], sync_month: str = None
         stats['errors'].append('Nu s-a putut conecta la Supabase')
         return stats
 
+    # Obtine AWB-urile existente pentru a le sari
+    existing = get_existing_sameday_parcels()
+
     for parcel in parcels:
+        awb_number = parcel.get('awb_number', '')
+
+        # Sari peste AWB-urile existente
+        if awb_number in existing:
+            stats['skipped'] += 1
+            continue
+
         try:
             data = {
-                'awb_number': parcel.get('awb_number', ''),
+                'awb_number': awb_number,
                 'cod_amount': parcel.get('cod_amount', 0),
                 'cod_currency': parcel.get('cod_currency', 'RON'),
                 'is_delivered': parcel.get('is_delivered', False),
@@ -325,16 +355,13 @@ def save_sameday_parcels_to_supabase(parcels: List[Dict], sync_month: str = None
                 'synced_at': datetime.now().isoformat()
             }
 
-            result = client.table('sameday_parcels').upsert(
-                data,
-                on_conflict='awb_number'
-            ).execute()
+            result = client.table('sameday_parcels').insert(data).execute()
 
             if result.data:
                 stats['inserted'] += 1
 
         except Exception as e:
-            stats['errors'].append(f"Eroare la AWB {parcel.get('awb_number')}: {str(e)}")
+            stats['errors'].append(f"Eroare la AWB {awb_number}: {str(e)}")
 
     return stats
 
