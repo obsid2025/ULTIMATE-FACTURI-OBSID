@@ -105,9 +105,9 @@ def search_netopia_emails(days_back: int = 30) -> List[Dict]:
         # Calculeaza data de start
         since_date = (datetime.now() - timedelta(days=days_back)).strftime('%d-%b-%Y')
 
-        # Cauta email-uri de la Netopia cu "decontare" in subject
-        # IMAP search: FROM "netopia" SINCE date SUBJECT "decontare"
-        search_criteria = f'(FROM "netopia" SINCE {since_date} SUBJECT "decontare")'
+        # Cauta email-uri cu "netopia" si "decontare" in subject
+        # Nu folosim FROM pentru ca email-urile pot fi forward-ate
+        search_criteria = f'(SINCE {since_date} SUBJECT "netopia" SUBJECT "decontare")'
 
         status, messages = mail.search(None, search_criteria)
 
