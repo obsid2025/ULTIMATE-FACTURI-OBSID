@@ -1,15 +1,21 @@
 """
 Matching Engine - Logica de potrivire MT940 + Borderouri + Facturi
 Implementeaza logica din grupare facturi_obsid.py pentru versiunea web
+
+Include algoritm inteligent de matching pentru:
+- Gasirea combinatiei de colete care se potriveste cu suma OP-ului
+- Identificarea coletelor "pending" care vor fi pe urmatorul borderou
 """
 
 import re
-from typing import List, Dict, Optional, Tuple
-from datetime import datetime, date
-from decimal import Decimal
+from typing import List, Dict, Optional, Tuple, Set
+from datetime import datetime, date, timedelta
+from decimal import Decimal, ROUND_HALF_UP
+from itertools import combinations
 
 from .supabase_client import get_supabase_client
 from .oblio_api import get_all_invoices, _get_access_token, _get_headers, OBLIO_API_BASE, OBLIO_CIF
+from .smart_matching import find_parcel_combination, match_gls_parcels_to_bank_transactions, match_sameday_parcels_to_bank_transactions
 import requests
 
 
@@ -452,3 +458,159 @@ def get_matching_statistics(
         'difference': total_trans_amount - total_inv_amount,
         'by_source': by_source
     }
+
+
+def generate_smart_opuri_report(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> Dict:
+    """
+    Genereaza raportul OP-uri folosind algoritmul inteligent de matching.
+
+    Acest algoritm:
+    1. Ia toate tranzactiile bancare (OP-uri)
+    2. Pentru fiecare OP, gaseste combinatia exacta de colete care se potriveste
+    3. Coletele ramase sunt marcate ca "pending" pentru urmatorul OP
+    4. Identifica coletele care nu au OP inca (vor veni in viitor)
+
+    Returns:
+        Dict cu rezultatele matching-ului si statistici
+    """
+    # Ruleaza smart matching pentru GLS si Sameday
+    gls_results = match_gls_parcels_to_bank_transactions(start_date, end_date)
+    sameday_results = match_sameday_parcels_to_bank_transactions(start_date, end_date)
+
+    return {
+        'gls': gls_results,
+        'sameday': sameday_results,
+        'summary': {
+            'gls_matched': gls_results.get('matched_parcels', 0),
+            'gls_pending': gls_results.get('pending_parcels', 0),
+            'gls_pending_amount': gls_results.get('pending_total', 0),
+            'sameday_matched': sameday_results.get('matched_parcels', 0),
+            'sameday_pending': sameday_results.get('pending_parcels', 0),
+            'sameday_pending_amount': sameday_results.get('pending_total', 0),
+        }
+    }
+
+
+def get_pending_parcels_summary() -> Dict:
+    """
+    Returneaza un sumar al coletelor care nu au fost inca potrivite cu OP-uri.
+
+    Aceste colete vor fi pe urmatoarele borderouri bancare.
+
+    Returns:
+        Dict cu coletele pending grupate pe sursa
+    """
+    smart_results = generate_smart_opuri_report()
+
+    pending_summary = {
+        'gls': {
+            'count': smart_results['gls'].get('pending_parcels', 0),
+            'total': smart_results['gls'].get('pending_total', 0),
+            'parcels': smart_results['gls'].get('pending', [])
+        },
+        'sameday': {
+            'count': smart_results['sameday'].get('pending_parcels', 0),
+            'total': smart_results['sameday'].get('pending_total', 0),
+            'parcels': smart_results['sameday'].get('pending', [])
+        }
+    }
+
+    pending_summary['total_count'] = pending_summary['gls']['count'] + pending_summary['sameday']['count']
+    pending_summary['total_amount'] = pending_summary['gls']['total'] + pending_summary['sameday']['total']
+
+    return pending_summary
+
+
+def analyze_parcel_discrepancy(
+    source: str,
+    op_reference: str,
+    expected_amount: float
+) -> Dict:
+    """
+    Analizeaza discrepanta pentru un OP specific.
+
+    Util cand suma coletelor din API nu se potriveste cu suma din OP.
+    Gaseste care colete fac parte din OP si care vor fi pe alt borderou.
+
+    Args:
+        source: 'GLS' sau 'Sameday'
+        op_reference: Referinta OP-ului
+        expected_amount: Suma asteptata (din OP)
+
+    Returns:
+        Dict cu analiza discrepantei
+    """
+    supabase = get_supabase_client()
+
+    # Gaseste tranzactia bancara
+    trans = supabase.table('bank_transactions') \
+        .select('*') \
+        .eq('op_reference', op_reference) \
+        .execute().data
+
+    if not trans:
+        return {'error': f'OP-ul {op_reference} nu a fost gasit'}
+
+    trans = trans[0]
+    op_date = trans.get('transaction_date', '')
+    op_amount = float(trans.get('amount', 0))
+
+    # Calculeaza intervalul de livrare (1-5 zile inainte de OP)
+    op_date_obj = datetime.strptime(op_date, '%Y-%m-%d').date()
+    delivery_start = op_date_obj - timedelta(days=5)
+
+    # Ia coletele din perioada
+    if source == 'GLS':
+        table = 'gls_parcels'
+        id_field = 'parcel_number'
+    else:
+        table = 'sameday_parcels'
+        id_field = 'awb_number'
+
+    parcels = supabase.table(table).select('*') \
+        .eq('is_delivered', True) \
+        .gte('delivery_date', delivery_start.isoformat()) \
+        .lte('delivery_date', op_date) \
+        .execute().data
+
+    if not parcels:
+        return {
+            'op_reference': op_reference,
+            'op_amount': op_amount,
+            'error': 'Nu s-au gasit colete pentru aceasta perioada'
+        }
+
+    total_parcels_sum = sum(float(p.get('cod_amount', 0)) for p in parcels)
+
+    # Foloseste algoritmul de matching
+    matched, remaining = find_parcel_combination(parcels, op_amount)
+
+    result = {
+        'op_reference': op_reference,
+        'op_date': op_date,
+        'op_amount': op_amount,
+        'total_parcels_in_period': len(parcels),
+        'total_parcels_sum': round(total_parcels_sum, 2),
+        'difference': round(total_parcels_sum - op_amount, 2),
+        'matched_parcels': len(matched),
+        'matched_sum': round(sum(float(p.get('cod_amount', 0)) for p in matched), 2),
+        'pending_parcels': len(remaining),
+        'pending_sum': round(sum(float(p.get('cod_amount', 0)) for p in remaining), 2),
+    }
+
+    if remaining:
+        result['pending_details'] = [
+            {
+                id_field: p.get(id_field),
+                'cod_amount': float(p.get('cod_amount', 0)),
+                'recipient_name': p.get('recipient_name', ''),
+                'delivery_date': p.get('delivery_date'),
+                'note': 'Va fi pe alt borderou'
+            }
+            for p in remaining
+        ]
+
+    return result
