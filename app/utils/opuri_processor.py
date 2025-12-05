@@ -81,28 +81,64 @@ def get_gls_borderouri_for_period(start_date: str, end_date: str) -> List[Dict]:
     """
     Obtine borderourile GLS din email pentru o perioada.
     Acestea contin gruparea reala a coletelor asa cum le trimite GLS.
+
+    IMPORTANT: Include si borderouri din primele 7 zile ale lunii urmatoare,
+    deoarece coletele livrate la sfarsitul lunii pot aparea pe borderou
+    in luna urmatoare (ex: livrat 27.11, borderou 02.12).
     """
     client = get_client()
     if not client:
         return []
 
     try:
+        # Extinde end_date cu 7 zile pentru a prinde borderouri care vin mai tarziu
+        from datetime import datetime, timedelta
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+        extended_end = (end_date_obj + timedelta(days=7)).strftime('%Y-%m-%d')
+
         result = client.table("gls_borderouri").select("*").gte(
             "borderou_date", start_date
         ).lte(
-            "borderou_date", end_date
+            "borderou_date", extended_end
         ).order("borderou_date").execute()
 
         borderouri = result.data or []
 
-        # Pentru fiecare borderou, obtine coletele asociate
+        # Pentru fiecare borderou, obtine coletele asociate si verifica daca au livrari in perioada
+        filtered_borderouri = []
         for borderou in borderouri:
             parcels_result = client.table("gls_borderou_parcels").select("*").eq(
                 "borderou_id", borderou['id']
             ).execute()
             borderou['parcels'] = parcels_result.data or []
 
-        return borderouri
+            # Verifica daca borderoul e in perioada originala SAU daca are colete livrate in perioada
+            borderou_date = borderou.get('borderou_date', '')
+            if borderou_date >= start_date and borderou_date <= end_date:
+                # Borderou in perioada - include direct
+                filtered_borderouri.append(borderou)
+            else:
+                # Borderou in afara perioadei - include doar daca are colete cu delivery_date in perioada
+                # Verifica in gls_parcels delivery_date pentru aceste colete
+                parcel_numbers = [p.get('parcel_number') for p in borderou['parcels']]
+                if parcel_numbers:
+                    # Cauta delivery_date pentru aceste colete
+                    parcels_with_dates = client.table("gls_parcels").select("parcel_number, delivery_date").in_(
+                        "parcel_number", parcel_numbers
+                    ).execute().data or []
+
+                    # Verifica daca vreun colet a fost livrat in perioada selectata
+                    has_delivery_in_period = False
+                    for p in parcels_with_dates:
+                        delivery_date = p.get('delivery_date', '')
+                        if delivery_date and delivery_date >= start_date and delivery_date <= end_date:
+                            has_delivery_in_period = True
+                            break
+
+                    if has_delivery_in_period:
+                        filtered_borderouri.append(borderou)
+
+        return filtered_borderouri
     except Exception as e:
         print(f"Eroare la citirea GLS borderouri: {e}")
         return []
@@ -269,7 +305,13 @@ def generate_opuri_export(
     """
     # Obtine datele din Supabase
     sameday_parcels = get_sameday_parcels_for_period(start_date, end_date)
-    mt940_transactions = get_mt940_transactions_for_period(start_date, end_date)
+
+    # Extinde perioada pentru MT940 cu 7 zile pentru a gasi OP-uri care vin mai tarziu
+    # (ex: borderou din 28.11 poate avea OP pe 02.12)
+    from datetime import datetime, timedelta
+    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+    extended_end = (end_date_obj + timedelta(days=7)).strftime('%Y-%m-%d')
+    mt940_transactions = get_mt940_transactions_for_period(start_date, extended_end)
 
     # Obtine borderourile GLS REALE din email (nu simulate)
     gls_borderouri_real = get_gls_borderouri_for_period(start_date, end_date)
@@ -499,8 +541,28 @@ def generate_opuri_export(
         first_row = True
         if netopia_trans:
             for trans in netopia_trans:
-                order_id = trans.get('order_id', '')
+                order_id_raw = trans.get('order_id', '')
                 amount = float(trans.get('amount', 0) or 0)
+
+                # Extrage doar numarul din order_id (ex: "Comanda nr. 569 - www.obsid.ro" -> "569")
+                order_id = order_id_raw
+                if 'Comanda nr.' in str(order_id_raw):
+                    import re
+                    match = re.search(r'Comanda nr\.\s*(\d+)', str(order_id_raw))
+                    if match:
+                        order_id = match.group(1)
+                elif 'Bank transfer' in str(order_id_raw):
+                    # Skip bank transfer entries (sunt transferuri interne)
+                    continue
+
+                # Daca amount e 0, foloseste net_amount (suma - comision)
+                if amount == 0:
+                    amount = float(trans.get('net_amount', 0) or 0)
+                    # Daca tot e 0, incearca sa calculam din fee (comisionul e negativ)
+                    if amount == 0:
+                        fee = float(trans.get('fee', 0) or 0)
+                        if fee < 0:
+                            amount = abs(fee)  # Folosim valoarea absoluta a comisionului ca aproximare
 
                 # Cauta factura
                 numar_factura = ''
