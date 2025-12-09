@@ -56,6 +56,100 @@ def get_sameday_parcels_for_period(start_date: str, end_date: str) -> List[Dict]
         return []
 
 
+def get_sameday_borderouri_from_ops(start_date: str, end_date: str, mt940_transactions: List[Dict]) -> List[Dict]:
+    """
+    Construieste borderouri Sameday pe baza OP-urilor din MT940.
+
+    Sameday trimite OP-uri cu referinta la borderou (ex: "BORD 1087").
+    Fiecare OP corespunde unui grup de colete livrate.
+
+    IMPORTANT: Include si OP-uri din primele 7 zile ale lunii urmatoare,
+    deoarece coletele livrate la sfarsitul lunii pot avea OP in luna urmatoare.
+    """
+    client = get_client()
+    if not client:
+        return []
+
+    # Filtreaza OP-urile Sameday
+    sameday_ops = [t for t in mt940_transactions if t.get('source', '').upper() == 'SAMEDAY']
+
+    if not sameday_ops:
+        return []
+
+    borderouri = []
+
+    for op in sameday_ops:
+        suma_op = float(op.get('amount', 0) or 0)
+        op_date = str(op.get('transaction_date', ''))
+        op_reference = op.get('op_reference', '')
+        details = op.get('details', '')
+
+        # Extrage numarul borderoului din details (ex: "BORD 1087")
+        borderou_num = ''
+        if details:
+            import re
+            match = re.search(r'BORD\s*(\d+)', str(details), re.IGNORECASE)
+            if match:
+                borderou_num = match.group(1)
+
+        # Gaseste coletele care se potrivesc cu suma OP-ului
+        # Cauta colete Sameday livrate in perioada sau cu delivery_date in perioada
+        try:
+            # Obtine toate coletele Sameday livrate
+            all_parcels = client.table("sameday_parcels").select("*").eq("is_delivered", True).execute().data or []
+
+            # Filtreaza coletele care au delivery_date in perioada selectata
+            period_parcels = []
+            for p in all_parcels:
+                delivery_date = str(p.get('delivery_date', ''))
+                if delivery_date >= start_date and delivery_date <= end_date:
+                    period_parcels.append(p)
+
+            # Incearca sa gaseasca combinatia de colete care da suma OP-ului
+            # Pentru simplitate, daca avem un singur colet cu suma exacta, il folosim
+            matched_parcels = []
+            for p in period_parcels:
+                if abs(float(p.get('cod_amount', 0) or 0) - suma_op) < 0.10:
+                    matched_parcels = [p]
+                    break
+
+            # Daca nu am gasit un singur colet, incercam sa gasim combinatia
+            if not matched_parcels:
+                # Grupeaza pe delivery_date si verifica suma
+                from collections import defaultdict
+                by_date = defaultdict(list)
+                for p in period_parcels:
+                    by_date[p.get('delivery_date', '')].append(p)
+
+                for date_key, date_parcels in by_date.items():
+                    total = sum(float(p.get('cod_amount', 0) or 0) for p in date_parcels)
+                    if abs(total - suma_op) < 0.10:
+                        matched_parcels = date_parcels
+                        break
+
+            if matched_parcels:
+                # Genereaza nume borderou
+                first_delivery = matched_parcels[0].get('delivery_date', op_date)
+                borderou_name = f"{first_delivery}-obsid-s r l-cod-ledger-ron.xlsx"
+
+                borderouri.append({
+                    'borderou': borderou_name,
+                    'curier': 'Sameday',
+                    'delivery_date': first_delivery,
+                    'parcels': matched_parcels,
+                    'suma_total': suma_op,
+                    'op_reference': op_reference,
+                    'op_date': op_date,
+                    'op_matched': True,
+                    'borderou_num': borderou_num
+                })
+        except Exception as e:
+            print(f"Eroare la procesarea Sameday OP: {e}")
+            continue
+
+    return borderouri
+
+
 def get_mt940_transactions_for_period(start_date: str, end_date: str) -> List[Dict]:
     """
     Obtine tranzactiile MT940 (OP-uri bancare) pentru o perioada.
@@ -303,9 +397,6 @@ def generate_opuri_export(
     nu gruparile simulate pe data livrarii. Borderourile GLS din email contin gruparea
     exacta a coletelor asa cum apar in desfasuratorul de ramburs.
     """
-    # Obtine datele din Supabase
-    sameday_parcels = get_sameday_parcels_for_period(start_date, end_date)
-
     # Extinde perioada pentru MT940 cu 7 zile pentru a gasi OP-uri care vin mai tarziu
     # (ex: borderou din 28.11 poate avea OP pe 02.12)
     from datetime import datetime, timedelta
@@ -345,8 +436,14 @@ def generate_opuri_export(
         gls_parcels = get_gls_parcels_for_period(start_date, end_date)
         gls_borderouri = group_parcels_by_delivery_date(gls_parcels, "GLS")
 
-    # Pentru Sameday folosim metoda veche (grupeaza pe data livrarii)
-    sameday_borderouri = group_parcels_by_delivery_date(sameday_parcels, "Sameday")
+    # Pentru Sameday: construieste borderouri pe baza OP-urilor din MT940
+    # Aceasta metoda gaseste OP-urile Sameday si le potriveste cu coletele livrate
+    sameday_borderouri = get_sameday_borderouri_from_ops(start_date, end_date, mt940_transactions)
+
+    # Fallback: daca nu am gasit borderouri prin OP-uri, foloseste metoda veche
+    if not sameday_borderouri:
+        sameday_parcels = get_sameday_parcels_for_period(start_date, end_date)
+        sameday_borderouri = group_parcels_by_delivery_date(sameday_parcels, "Sameday")
 
     # Obtine facturile din Oblio
     client = get_client()
@@ -404,8 +501,8 @@ def generate_opuri_export(
             parcels = borderou['parcels']
             suma_total = borderou['suma_total']
 
-            # Pentru GLS, foloseste OP-ul pre-potrivit daca exista
-            if curier == "GLS" and borderou.get('op_matched'):
+            # Foloseste OP-ul pre-potrivit daca exista (pentru GLS si Sameday)
+            if borderou.get('op_matched'):
                 numar_op = borderou.get('op_reference', '')
                 data_op = borderou.get('op_date', '')
             else:
