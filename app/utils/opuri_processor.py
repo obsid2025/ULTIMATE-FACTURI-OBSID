@@ -113,7 +113,7 @@ def get_gls_borderouri_for_period(start_date: str, end_date: str) -> List[Dict]:
             borderou['parcels'] = parcels_result.data or []
 
             # Verifica daca borderoul e in perioada originala SAU daca are colete livrate in perioada
-            borderou_date = borderou.get('borderou_date', '')
+            borderou_date = str(borderou.get('borderou_date', ''))
             if borderou_date >= start_date and borderou_date <= end_date:
                 # Borderou in perioada - include direct
                 filtered_borderouri.append(borderou)
@@ -130,7 +130,7 @@ def get_gls_borderouri_for_period(start_date: str, end_date: str) -> List[Dict]:
                     # Verifica daca vreun colet a fost livrat in perioada selectata
                     has_delivery_in_period = False
                     for p in parcels_with_dates:
-                        delivery_date = p.get('delivery_date', '')
+                        delivery_date = str(p.get('delivery_date', ''))
                         if delivery_date and delivery_date >= start_date and delivery_date <= end_date:
                             has_delivery_in_period = True
                             break
