@@ -652,28 +652,42 @@ def generate_opuri_export(
                     # Skip bank transfer entries (sunt transferuri interne)
                     continue
 
-                # Daca amount e 0, foloseste net_amount (suma - comision)
-                if amount == 0:
-                    amount = float(trans.get('net_amount', 0) or 0)
-                    # Daca tot e 0, incearca sa calculam din fee (comisionul e negativ)
-                    if amount == 0:
-                        fee = float(trans.get('fee', 0) or 0)
-                        if fee < 0:
-                            amount = abs(fee)  # Folosim valoarea absoluta a comisionului ca aproximare
-
-                # Cauta factura
+                # Cauta factura SI suma din Gomag INAINTE de a folosi net_amount
                 numar_factura = ''
+                suma_din_gomag = 0
                 if gomag_df is not None and not gomag_df.empty and order_id:
                     gomag_temp = gomag_df.copy()
                     gomag_temp.columns = gomag_temp.columns.str.strip().str.lower()
-                    match = gomag_temp[gomag_temp['numar comanda'].astype(str) == str(order_id)]
-                    if not match.empty:
-                        nf = match.iloc[0].get('numar factura', '')
+                    gomag_match = gomag_temp[gomag_temp['numar comanda'].astype(str) == str(order_id)]
+                    if not gomag_match.empty:
+                        nf = gomag_match.iloc[0].get('numar factura', '')
                         if nf and str(nf) != 'nan':
                             try:
                                 numar_factura = str(int(float(nf)))
                             except:
                                 numar_factura = str(nf)
+                        # Ia suma din Gomag (coloana 'total comanda' sau 'total factura')
+                        for col in ['total comanda', 'total factura']:
+                            if col in gomag_temp.columns:
+                                try:
+                                    val = gomag_match.iloc[0].get(col, 0)
+                                    if val and str(val) != 'nan':
+                                        val_str = str(val).replace('RON', '').replace(',', '.').strip()
+                                        suma_din_gomag = float(val_str)
+                                        if suma_din_gomag > 0:
+                                            break
+                                except:
+                                    pass
+
+                # Prioritate: 1) Suma din Gomag, 2) net_amount, 3) fee absolut
+                if suma_din_gomag > 0:
+                    amount = suma_din_gomag
+                elif amount == 0:
+                    amount = float(trans.get('net_amount', 0) or 0)
+                    if amount == 0:
+                        fee = float(trans.get('fee', 0) or 0)
+                        if fee < 0:
+                            amount = abs(fee)
 
                 if not first_row:
                     row_num += 1
