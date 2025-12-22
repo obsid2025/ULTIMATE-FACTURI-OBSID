@@ -30,11 +30,11 @@ import cloudinary.uploader
 # Import Supabase database functions (migrated from PostgreSQL)
 from utils.decanturi_processor import adauga_bon, verificare_bon_exista, get_bonuri_procesate_pentru_comenzi
 
-# Configurare Cloudinary (OBSID account)
+# Configurare Cloudinary (din environment variables pentru securitate)
 cloudinary.config(
-  cloud_name = "dbecgc8il",
-  api_key = "247839385395521",
-  api_secret = "KxQ5g122_3rSbnsV3Cl5WZnMpOQ"
+  cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME', 'dbecgc8il'),
+  api_key = os.getenv('CLOUDINARY_API_KEY'),
+  api_secret = os.getenv('CLOUDINARY_API_SECRET')
 )
 
 # Configurare logging
