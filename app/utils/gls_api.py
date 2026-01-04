@@ -333,6 +333,79 @@ def save_gls_parcels_to_supabase(parcels: List[Dict], sync_month: str = None) ->
     return stats
 
 
+def get_all_parcels_with_status(days_back: int = 30, username: str = None,
+                                 password: str = None, client_number: str = None,
+                                 progress_callback=None) -> List[Dict]:
+    """
+    Obtine TOATE coletele expediate si statusul lor actual.
+    Folosit pentru tracking colete nelivrate.
+
+    Args:
+        days_back: Cate zile in urma sa caute
+        username, password, client_number: Credentiale GLS
+        progress_callback: Functie pentru raportare progres (optional)
+
+    Returns:
+        Lista de colete cu status complet (livrate si nelivrate)
+    """
+    # Get all parcels
+    parcels = get_gls_parcels(days_back, username, password, client_number)
+
+    user = username or GLS_USERNAME
+    pwd = password or GLS_PASSWORD
+
+    all_parcels = []
+    total = len(parcels)
+
+    for i, parcel in enumerate(parcels):
+        if progress_callback:
+            progress_callback(i + 1, total)
+
+        # Get status for this parcel
+        status = get_parcel_status(parcel["parcel_number"], user, pwd)
+
+        parcel["is_delivered"] = status.get("is_delivered", False)
+        parcel["delivery_date"] = status.get("delivery_date")
+        parcel["delivery_date_str"] = status["delivery_date"].strftime("%Y-%m-%d") if status.get("delivery_date") else ""
+        parcel["statuses"] = status.get("statuses", [])
+
+        # Get last status description
+        if status.get("statuses"):
+            last_status = status["statuses"][-1]
+            parcel["last_status"] = last_status.get("description", "")
+            parcel["last_status_date"] = last_status.get("date")
+        else:
+            parcel["last_status"] = "Necunoscut"
+            parcel["last_status_date"] = None
+
+        all_parcels.append(parcel)
+
+    return all_parcels
+
+
+def get_undelivered_parcels(days_back: int = 30, username: str = None,
+                            password: str = None, client_number: str = None,
+                            progress_callback=None) -> List[Dict]:
+    """
+    Obtine coletele care NU au fost livrate.
+
+    Args:
+        days_back: Cate zile in urma sa caute
+        username, password, client_number: Credentiale GLS
+        progress_callback: Functie pentru raportare progres
+
+    Returns:
+        Lista de colete NELIVRATE
+    """
+    all_parcels = get_all_parcels_with_status(days_back, username, password,
+                                               client_number, progress_callback)
+
+    # Filter only undelivered
+    undelivered = [p for p in all_parcels if not p.get("is_delivered")]
+
+    return undelivered
+
+
 def test_gls_connection(username: str = None, password: str = None,
                         client_number: str = None) -> bool:
     """Testeaza conexiunea la GLS API."""
